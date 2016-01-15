@@ -318,17 +318,17 @@ def configure() {
 def listCurrentParams() {
 	log.debug "Listing of current parameter settings of ${device.displayName}"
     def cmds = []
-    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 1).format())
-    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 2).format())
-    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 11).format())
-    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 12).format())
-    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 13).format())
-    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 14).format())
-    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 21).format())
-    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 22).format())
-    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 24).format())
-    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 25).format())
-    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 30).format())
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 1).format()
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 2).format()
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 11).format()
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 12).format()
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 13).format()
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 14).format()
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 21).format()
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 22).format()
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 24).format()
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 25).format()
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 30).format()
     
 	delayBetween(cmds, 500)
 }
