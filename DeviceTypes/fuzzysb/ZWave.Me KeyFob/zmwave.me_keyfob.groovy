@@ -15,6 +15,8 @@
  *	Author: fuzzysb
  *	Date: 2016-01-14
  *
+ *  V1.2 added fix for newer firmware because button 1 was not working.
+ *
  *  V1.1 Added functions to recieve and send security encapsulated messages
  *
  *  V1.0 Initial Release, each button can be pressed, held or double clicked giving 12 actions that can be assigned in smartthings
@@ -155,13 +157,13 @@ def zwaveEvent(physicalgraph.zwave.commands.securityv1.SecurityMessageEncapsulat
 	}
 }
 
+def zwaveEvent(physicalgraph.zwave.commands.configurationv1.ConfigurationReport cmd) {
+	log.debug "${device.displayName} parameter '${cmd.parameterNumber}' with a byte size of '${cmd.size}' is set to '${cmd.configurationValue}'"
+}
+
 def zwaveEvent(physicalgraph.zwave.commands.wakeupv1.WakeUpNotification cmd) {
 	[ createEvent(descriptionText: "${device.displayName} woke up"),
 	response(zwave.wakeUpV1.wakeUpNoMoreInformation()) ]
-}
-
-def zwaveEvent(physicalgraph.zwave.commands.configurationv1.ConfigurationReport cmd) {
-	log.debug "${device.displayName} parameter '${cmd.parameterNumber}' with a byte size of '${cmd.size}' is set to '${cmd.configurationValue}'"
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.batteryv1.BatteryReport cmd) {
@@ -268,15 +270,16 @@ def zwaveEvent(physicalgraph.zwave.commands.sceneactivationv1.SceneActivationSet
 	}
 }
 
-// Uncomment following Section to debug
-//def zwaveEvent(physicalgraph.zwave.Command cmd) {
-//	log.debug "return result of Zwave Event"
-//	return createEvent(descriptionText: "${device.displayName}: ${cmd}")
-//}
+//Uncomment following Section to debug
+def zwaveEvent(physicalgraph.zwave.Command cmd) {
+	log.debug "return result of Zwave Event"
+	return createEvent(descriptionText: "${device.displayName}: ${cmd}")
+}
 
 def configure() {
 	log.debug "Resetting Sensor Parameters to SmartThings Compatible Defaults"
 	def cmds = []
+    cmds << zwave.associationV1.associationSet(groupingIdentifier: 1, nodeId: zwaveHubNodeId).format()
     cmds << zwave.associationV1.associationSet(groupingIdentifier: 2, nodeId: zwaveHubNodeId).format()
     cmds << zwave.associationV1.associationSet(groupingIdentifier: 3, nodeId: zwaveHubNodeId).format()
     cmds << zwave.associationV1.associationSet(groupingIdentifier: 4, nodeId: zwaveHubNodeId).format()
@@ -300,6 +303,7 @@ def configure() {
     def resetParams2StDefaults() {
 	log.debug "Resetting Sensor Parameters to SmartThings Compatible Defaults"
 	def cmds = []
+    cmds << zwave.associationV1.associationSet(groupingIdentifier: 1, nodeId: zwaveHubNodeId).format()
     cmds << zwave.associationV1.associationSet(groupingIdentifier: 2, nodeId: zwaveHubNodeId).format()
     cmds << zwave.associationV1.associationSet(groupingIdentifier: 3, nodeId: zwaveHubNodeId).format()
     cmds << zwave.associationV1.associationSet(groupingIdentifier: 4, nodeId: zwaveHubNodeId).format()
@@ -322,6 +326,11 @@ def configure() {
 def listCurrentParams() {
 	log.debug "Listing of current parameter settings of ${device.displayName}"
     def cmds = []
+	cmds << zwave.associationV1.associationGet(groupingIdentifier: 1).format()
+    cmds << zwave.associationV1.associationGet(groupingIdentifier: 2).format()
+    cmds << zwave.associationV1.associationGet(groupingIdentifier: 3).format()
+    cmds << zwave.associationV1.associationGet(groupingIdentifier: 4).format()
+    cmds << zwave.associationV1.associationGet(groupingIdentifier: 5).format()
     cmds << zwave.configurationV1.configurationGet(parameterNumber: 1).format()
     cmds << zwave.configurationV1.configurationGet(parameterNumber: 2).format()
     cmds << zwave.configurationV1.configurationGet(parameterNumber: 11).format()
