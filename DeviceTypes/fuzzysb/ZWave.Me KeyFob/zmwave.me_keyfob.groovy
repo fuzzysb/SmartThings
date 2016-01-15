@@ -160,6 +160,10 @@ def zwaveEvent(physicalgraph.zwave.commands.wakeupv1.WakeUpNotification cmd) {
 	response(zwave.wakeUpV1.wakeUpNoMoreInformation()) ]
 }
 
+def zwaveEvent(physicalgraph.zwave.commands.configurationv1.ConfigurationReport cmd) {
+	log.debug "${device.displayName} parameter '${cmd.parameterNumber}' with a byte size of '${cmd.size}' is set to '${cmd.configurationValue}'"
+}
+
 def zwaveEvent(physicalgraph.zwave.commands.batteryv1.BatteryReport cmd) {
 	def map = [ name: "battery", unit: "%" ]
 	if (cmd.batteryLevel == 0xFF) { // Special value for low battery alert
