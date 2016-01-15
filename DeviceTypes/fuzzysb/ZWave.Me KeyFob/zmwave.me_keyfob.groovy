@@ -15,6 +15,8 @@
  *	Author: fuzzysb
  *	Date: 2016-01-14
  *
+ *  V1.1 Added functions to recieve and send security encapsulated messages
+ *
  *  V1.0 Initial Release, each button can be pressed, held or double clicked giving 12 actions that can be assigned in smartthings
  *  Can also be used for a Devolo Home Control 9360 Remote
  */
@@ -101,6 +103,8 @@ simulator {
 	}
 }
 
+/*
+//Old Parse Method
 def parse(String description) {
 	def results = []
 	log.debug("RAW command: $description")
@@ -113,6 +117,41 @@ def parse(String description) {
 		if (cmd) {
 			results = zwaveEvent(cmd)
 		}
+	}
+}
+*/
+
+def parse(String description)
+{
+	def result = null
+	if (description.startsWith("Err 106")) {
+		state.sec = 0
+		result = createEvent( name: "secureInclusion", value: "failed", isStateChange: true,
+			descriptionText: "This sensor failed to complete the network security key exchange. If you are unable to control it via SmartThings, you must remove it from your network and add it again.")
+	} else if (description != "updated") {
+		def cmd = zwave.parse(description, [0x5E: 2, 0x8F: 1, 0x73: 1, 0x98: 1, 0x86: 2, 0x72: 2, 0x70: 1, 0x85: 2, 0x2D: 1, 0x8E: 2, 0x80: 1, 0x84: 2, 0x5A: 1, 0x59: 1, 0x5B: 1, 0xEF: 1, 0x20: 1, 0x5B: 1, 0x26: 2, 0x27: 1, 0x2B: 1, 0x60: 3])
+		if (cmd) {
+			result = zwaveEvent(cmd)
+            log.debug "Parse returned ${result?.inspect()}"
+            		} else {
+			log.debug("Couldn't zwave.parse '$description'")
+			null
+		}
+		
+	}
+	log.debug "Parsed '${description}' to ${result.inspect()}"
+	return result
+}
+
+def zwaveEvent(physicalgraph.zwave.commands.securityv1.SecurityMessageEncapsulation cmd) {
+	def encapsulatedCommand = cmd.encapsulatedCommand([0x5E: 2, 0x8F: 1, 0x73: 1, 0x98: 1, 0x86: 2, 0x72: 2, 0x70: 1, 0x85: 2, 0x2D: 1, 0x8E: 2, 0x80: 1, 0x84: 2, 0x5A: 1, 0x59: 1, 0x5B: 1, 0xEF: 1, 0x20: 1, 0x5B: 1, 0x26: 2, 0x27: 1, 0x2B: 1, 0x60: 3])
+	state.sec = 1
+	log.debug "encapsulated: ${encapsulatedCommand}"
+	if (encapsulatedCommand) {
+		zwaveEvent(encapsulatedCommand)
+	} else {
+		log.warn "Unable to extract encapsulated cmd from $cmd"
+		createEvent(descriptionText: cmd.toString())
 	}
 }
 
@@ -279,17 +318,27 @@ def configure() {
 def listCurrentParams() {
 	log.debug "Listing of current parameter settings of ${device.displayName}"
     def cmds = []
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 1).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 2).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 11).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 12).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 13).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 14).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 21).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 22).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 24).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 25).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 30).format()
+    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 1).format())
+    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 2).format())
+    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 11).format())
+    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 12).format())
+    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 13).format())
+    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 14).format())
+    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 21).format())
+    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 22).format())
+    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 24).format())
+    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 25).format())
+    cmds << secure(zwave.configurationV1.configurationGet(parameterNumber: 30).format())
     
 	delayBetween(cmds, 500)
+}
+
+private secure(physicalgraph.zwave.Command cmd) {
+	if (state.sec) {
+         log.debug "Sending Secure Command $cmd"
+		zwave.securityV1.securityMessageEncapsulation().encapsulate(cmd).format()
+	} else {
+    	log.debug "Sending Insecure Command $cmd"
+		cmd.format()
+	}
 }
