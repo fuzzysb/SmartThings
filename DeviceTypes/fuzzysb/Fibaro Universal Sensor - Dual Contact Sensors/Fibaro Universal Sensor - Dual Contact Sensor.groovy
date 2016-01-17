@@ -37,7 +37,7 @@ tiles {
 		state "open", label: '${name}', icon: "st.contact.contact.open", backgroundColor: "#ffa81e"
 		state "closed", label: '${name}', icon: "st.contact.contact.closed", backgroundColor: "#79b821"
 }
-	standardTile("contact2", "device.contact", width: 1, height: 1) {
+	standardTile("contact2", "device.contact2", width: 1, height: 1) {
 		state "open", label: '${name}', icon: "st.contact.contact.open", backgroundColor: "#ffa81e"
 		state "closed", label: '${name}', icon: "st.contact.contact.closed", backgroundColor: "#79b821"
 }
