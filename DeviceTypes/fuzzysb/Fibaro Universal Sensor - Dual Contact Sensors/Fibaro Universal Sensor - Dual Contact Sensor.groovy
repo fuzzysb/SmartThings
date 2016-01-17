@@ -18,12 +18,12 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  ***************************************************************************************
-
+ */
+ 
 metadata {
-	definition (name: "Fibaro Universal Sensor", namespace: "fuzzysb", author: "Stuart Buchanan") {
+	definition (name: "Fibaro Universal Sensor - Dual Contact", namespace: "fuzzysb", author: "Stuart Buchanan") {
     capability 	"Contact Sensor"
     capability 	"Configuration"
-	command "report"
     command "listCurrentParams"
 	
 	fingerprint deviceId: "0x2001", inClusters: "0x30 0x60 0x85 0x8E 0x72 0x70 0x86 0x7A 0xEF"
@@ -69,24 +69,15 @@ def zwaveEvent(physicalgraph.zwave.commands.configurationv1.ConfigurationReport 
 	log.debug("ConfigurationReport ${cmd.inspect()}")
 }
 
-def report() {
-	// zwave.manufacturerSpecificV1.manufacturerSpecificGet().format()
-	//
-	delayBetween([
-	zwave.configurationV1.configurationGet(parameterNumber: 5).format(),
-	zwave.configurationV1.configurationGet(parameterNumber: 6).format()
-	])
-	}
-
 def configure() {
 	log.debug "configure"
     def cmds = []
 	cmds << zwave.multiChannelAssociationV2.multiChannelAssociationSet(groupingIdentifier:2, nodeId:[zwaveHubNodeId]).format()
 	cmds << zwave.associationV2.associationSet(groupingIdentifier:3, nodeId:[zwaveHubNodeId]).format()
 	cmds << zwave.associationV1.associationRemove(groupingIdentifier:1, nodeId:zwaveHubNodeId).format()
-	cmds << zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 3, size: 1).format(
+	cmds << zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 3, size: 1).format()
 	cmds << zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 4, size: 1).format()
-)
+
     delayBetween(cmds, 500)
 	}
 
@@ -140,11 +131,10 @@ def listCurrentParams() {
 	log.debug "Listing of current parameter settings of ${device.displayName}"
     def cmds = []
 	cmds << zwave.multiChannelAssociationV2.multiChannelAssociationGet(groupingIdentifier:2).format()
-	cmds << zwave.associationV2.associationGet(groupingIdentifier:3).format()
-	cmds << zwave.associationV1.associationGet(groupingIdentifier:1).format()
+	cmds << zwave.associationV2.associationGet(groupingIdentifier: 3).format()
+	cmds << zwave.associationV1.associationGet(groupingIdentifier: 1).format()
     cmds << zwave.configurationV1.configurationGet(parameterNumber: 3).format()
     cmds << zwave.configurationV1.configurationGet(parameterNumber: 4).format()
-
-   
+	
 	delayBetween(cmds, 500)
 }
