@@ -13,7 +13,8 @@
  *	Tado Thermostat
  *
  *	Author: Stuart Buchanan, Based on original work by Ian M with thanks
- *	Date: 2015-01-22 v1.1 Add Heating & Cooling Controls (initial offering, will need to look into adding all possible commands)
+ *  Date: 2016-01-23 v1.1 fixed error in Tado Mode detection
+ *	Date: 2016-01-22 v1.1 Add Heating & Cooling Controls (initial offering, will need to look into adding all possible commands)
  *	Date: 2015-12-04 v1.0 Initial Release With Temperatures & Relative Humidity
  */
  
@@ -143,9 +144,11 @@ private parseResponse(resp) {
 		state.homeId = resp.data.homeId
         log.debug("Got HomeID Value: " + state.homeId)
 
-        def autoOperation = resp.data.tadoMode
-        if (resp.data.tadoMode == "NO_FREEZE"){
-        	autoOperation = "OFF"   
+        def autoOperation = resp.data.autoOperation
+        if(resp.data.operation == "NO_FREEZE"){
+        	autoOperation = "OFF"
+        }else if(resp.data.operation == "MANUAL"){
+        	autoOperation = "MANUAL"
         }
         log.debug("Read autoOperation: " + autoOperation)
         sendEvent(name: 'autoOperation', value: autoOperation)
