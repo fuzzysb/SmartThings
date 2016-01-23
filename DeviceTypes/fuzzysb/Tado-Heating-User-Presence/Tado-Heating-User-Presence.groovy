@@ -13,8 +13,7 @@
  *	Tado Thermostat
  *
  *	Author: Stuart Buchanan, Based on original work by Ian M with thanks
- *	Date: 2015-01-22 v1.1 Add Heating & Cooling Controls (initial offering, will need to look into adding all possible commands)
- *	Date: 2015-12-04 v1.0 Initial Release With Temperatures & Relative Humidity
+ *	Date: 2015-12-04 v1.0 Initial Release
  */
  
 import groovy.json.JsonOutput
@@ -27,7 +26,7 @@ preferences {
 }  
  
 metadata {
-	definition (name: "Tado User Presence", namespace: "fuzzysb", author: "Stuart Buchanan") {
+	definition (name: "Tado Heating User Presence", namespace: "fuzzysb", author: "Stuart Buchanan") {
 		capability "Presence Sensor"
 		capability "Sensor"
 		capability "Polling"
