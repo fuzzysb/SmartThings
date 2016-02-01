@@ -1,0 +1,5 @@
+#!/bin/sh
+cru a CheckIfHome "* * * * * /jffs/scripts/CheckIfHome"
+cru a CheckIfHome15 "* * * * * sleep 15; /jffs/scripts/CheckIfHome"
+cru a CheckIfHome30 "* * * * * sleep 30; /jffs/scripts/CheckIfHome"
+cru a CheckIfHome45 "* * * * * sleep 45; /jffs/scripts/CheckIfHome"

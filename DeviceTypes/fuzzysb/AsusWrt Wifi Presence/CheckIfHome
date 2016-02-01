@@ -1,0 +1,100 @@
+#!/bin/sh
+
+Stuart=Away
+Sharon=Away
+Dane=Away
+Scott=Away
+
+macadresser=`wl -i eth1 assoclist`
+antal=0
+antal=`qcsapi_sockrpc get_count_assoc wifi0`
+
+while [ $antal -gt 0 ]
+do
+  antal=`expr $antal - 1`
+  macadresser="`qcsapi_sockrpc get_station_mac_addr wifi0 $antal`;$macadresser"
+done
+
+case "$macadresser" in
+ *XX:XX:XX:XX:XX:XX*)
+ Stuart=Home
+ ;;
+esac
+
+case "$macadresser" in
+ *XX:XX:XX:XX:XX:XX*)
+ Sharon=Home
+ ;;
+esac
+
+case "$macadresser" in
+ *XX:XX:XX:XX:XX:XX*)
+ Dane=Home
+ ;;
+esac
+
+case "$macadresser" in
+ *XX:XX:XX:XX:XX:XX*)
+ Scott=Home
+ ;;
+esac
+
+if [ "$Stuart" = Home ]
+then
+ if [ ! -f /jffs/scripts/CheckUser/StuartHome ]
+ then
+  touch /jffs/scripts/CheckUser/StuartHome
+  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<AppID>/Phone/home?access_token=<Access Token>" -k
+ fi
+else
+ if [ -f /jffs/scripts/CheckUser/StuartHome ]
+ then
+  rm -f /jffs/scripts/CheckUser/StuartHome
+  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<AppID>/Phone/home?access_token=<Access Token>" -k
+  fi
+fi
+
+if [ "$Sharon" = Home ]
+then
+ if [ ! -f /jffs/scripts/CheckUser/SharonHome ]
+ then
+  touch /jffs/scripts/CheckUser/SharonHome
+  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<AppID>/Phone/home?access_token=<Access Token>" -k
+ fi
+else
+ if [ -f /jffs/scripts/CheckUser/SharonHome ]
+ then
+  rm -f /jffs/scripts/CheckUser/SharonHome
+  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<AppID>/Phone/home?access_token=<Access Token>" -k
+ fi
+fi
+
+if [ "$Dane" = Home ]
+then
+ if [ ! -f /jffs/scripts/CheckUser/DaneHome ]
+ then
+  touch /jffs/scripts/CheckUser/DaneHome
+  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<AppID>/Phone/home?access_token=<Access Token>" -k
+ fi
+else
+ if [ -f /jffs/scripts/CheckUser/DaneHome ]
+ then
+  rm -f /jffs/scripts/CheckUser/DaneHome
+  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<AppID>/Phone/home?access_token=<Access Token>" -k
+ fi
+fi
+
+if [ "$Scott" =  Home ]
+then
+ if [ ! -f /jffs/scripts/CheckUser/ScottHome ]
+ then
+  touch /jffs/scripts/CheckUser/ScottHome
+  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<AppID>/Phone/home?access_token=<Access Token>" -k
+ fi
+else
+ if [ -f /jffs/scripts/CheckUser/ScottHome ]
+ then
+  rm -f /jffs/scripts/CheckUser/ScottHome
+  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<AppID>/Phone/home?access_token=<Access Token>" -k
+ fi
+fi
