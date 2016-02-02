@@ -73,29 +73,6 @@ def zwaveEvent(physicalgraph.zwave.Command cmd) {
     return createEvent(descriptionText: "${device.displayName}: ${cmd}")
 }
 
-def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicReport cmd)
-{
-        def result = []
-        result << createEvent(name:"switch", value: cmd.value ? "on" : "off")
-
-        // For a multilevel switch, cmd.value can be from 1-99 to represent dimming levels
-        result << createEvent(name:"level", value: cmd.value, unit:"%", descriptionText:"${device.displayName} dimmed ${cmd.value==255 ? 100 : cmd.value}%")
-
-        result
-}
-
-def zwaveEvent(physicalgraph.zwave.commands.switchbinaryv1.SwitchBinaryReport cmd) {
-  log.debug "SwitchBinaryReport $cmd"
-  def result = []
-  result << response(
-  	delayBetween([
-    	zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:1, destinationEndPoint:1, commandClass:37, command:2).format(),
-    	zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:2, destinationEndPoint:2, commandClass:37, command:2).format()
-  	])
-  )
-  result
-}
-
 def zwaveEvent(physicalgraph.zwave.commands.multichannelv3.MultiChannelCmdEncap cmd) {
 	log.debug "MultiChannelCmdEncap $cmd"
 	def name = "switch$cmd.sourceEndPoint"
@@ -153,7 +130,6 @@ def refresh() {
 def poll() {
   log.debug "poll"
 	refresh()
-  ])
 }
 
 def configure() {
