@@ -1,0 +1,79 @@
+#!/bin/sh
+
+LivingRoomTV=Off
+ConservatoryTV=Off
+BedroomTV=Off
+
+macadresser=`wl -i eth1 assoclist`
+antal=0
+antal=`qcsapi_sockrpc get_count_assoc wifi0`
+
+while [ $antal -gt 0 ]
+do
+  antal=`expr $antal - 1`
+  macadresser="`qcsapi_sockrpc get_station_mac_addr wifi0 $antal`;$macadresser"
+done
+
+case "$macadresser" in
+ *XX:XX:XX:XX:XX:XX*)
+ LivingRoomTV=On
+ ;;
+esac
+
+case "$macadresser" in
+ *XX:XX:XX:XX:XX:XX*)
+ ConservatoryTV=On
+ ;;
+esac
+
+case "$macadresser" in
+ *XX:XX:XX:XX:XX:XX*)
+ BedroomTV=On
+ ;;
+esac
+
+if [ "$LivingRoomTV" = On ]
+then
+ if [ ! -f /jffs/scripts/CheckTV/LivingRoomTVOn ]
+ then
+  touch /jffs/scripts/CheckTV/LivingRoomTVOn
+  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<App Id>/TV/on?access_token=<Access Token>" -k
+ fi
+else
+ if [ -f /jffs/scripts/CheckTV/LivingRoomTVOn ]
+ then
+  rm -f /jffs/scripts/CheckTV/LivingRoomTVOn
+  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<App Id>/TV/off?access_token=<Access Token>" -k
+  fi
+fi
+
+if [ "$ConservatoryTV" = On ]
+then
+ if [ ! -f /jffs/scripts/CheckTV/ConservatoryTVOn ]
+ then
+  touch /jffs/scripts/CheckTV/ConservatoryTVOn
+  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<App Id>/TV/on?access_token=<Access Token>" -k
+ fi
+else
+ if [ -f /jffs/scripts/CheckTV/ConservatoryTVOn ]
+ then
+  rm -f /jffs/scripts/CheckTV/ConservatoryTVOn
+  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<App Id>/TV/off?access_token=<Access Token>" -k
+ fi
+fi
+
+if [ "$BedroomTV" = On ]
+then
+ if [ ! -f /jffs/scripts/CheckTV/BedroomTVOn ]
+ then
+  touch /jffs/scripts/CheckTV/BedroomTVOn
+  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<App Id>/TV/on?access_token=<Access Token>" -k
+ fi
+else
+ if [ -f /jffs/scripts/CheckTV/BedroomTVOn ]
+ then
+  rm -f /jffs/scripts/CheckTV/BedroomTVOn
+  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<App Id>/TV/off?access_token=<Access Token>" -k
+ fi
+fi
+
