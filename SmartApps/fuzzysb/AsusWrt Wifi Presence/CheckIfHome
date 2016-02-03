@@ -50,7 +50,7 @@ else
  if [ -f /jffs/scripts/CheckUser/StuartHome ]
  then
   rm -f /jffs/scripts/CheckUser/StuartHome
-  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<AppID>/Phone/home?access_token=<Access Token>" -k
+  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<AppID>/Phone/away?access_token=<Access Token>" -k
   fi
 fi
 
@@ -65,7 +65,7 @@ else
  if [ -f /jffs/scripts/CheckUser/SharonHome ]
  then
   rm -f /jffs/scripts/CheckUser/SharonHome
-  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<AppID>/Phone/home?access_token=<Access Token>" -k
+  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<AppID>/Phone/away?access_token=<Access Token>" -k
  fi
 fi
 
@@ -80,7 +80,7 @@ else
  if [ -f /jffs/scripts/CheckUser/DaneHome ]
  then
   rm -f /jffs/scripts/CheckUser/DaneHome
-  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<AppID>/Phone/home?access_token=<Access Token>" -k
+  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<AppID>/Phone/away?access_token=<Access Token>" -k
  fi
 fi
 
@@ -95,6 +95,6 @@ else
  if [ -f /jffs/scripts/CheckUser/ScottHome ]
  then
   rm -f /jffs/scripts/CheckUser/ScottHome
-  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<AppID>/Phone/home?access_token=<Access Token>" -k
+  curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/<AppID>/Phone/away?access_token=<Access Token>" -k
  fi
 fi
