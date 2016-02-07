@@ -26,15 +26,20 @@ metadata {
 			
         capability "Switch"
 		capability "Contact Sensor"
+        capability "Signal Strength"
 		capability "Actuator"
 		capability "Sensor"
         capability "Refresh"
         capability "Polling"
 		
-        
+        attribute "reflection", "string"
         attribute "status", "string"
-        attribute "lastDoorAction", "string"
+        attribute "time", "string"
+        attribute "lastAction", "string"
+        attribute "reflection", "string"
+        attribute "ver", "string"
 		
+        command "stop"
 		command "statusCommand"
 		command "setConfigCommand"
 		command "doorConfigCommand"
@@ -48,24 +53,52 @@ metadata {
 tiles(scale: 2) {
     multiAttributeTile(name:"status", type: "generic", width: 6, height: 4){
         tileAttribute ("device.status", key: "PRIMARY_CONTROL") {
-            attributeState "Open", label:'${name}', action:"status.off", icon:"st.contact.contact.open", backgroundColor:"#ffa81e"
-            attributeState "Closing", label:'${name}', icon:"st.doors.garage.garage-closing", backgroundColor:"#6699ff"
-            attributeState "Closed", label:'${name}', action:"status.on", icon:"st.doors.garage.garage-closed", backgroundColor:"#79b821"
+            attributeState "open", label:'${name}', action:"switch.off", icon:"st.doors.garage.garage-open", backgroundColor:"#ffa81e"
+            attributeState "opening", label:'${name}', icon:"st.doors.garage.garage-opening", backgroundColor:"#ffa81e"
+            attributeState "closing", label:'${name}', icon:"st.doors.garage.garage-closing", backgroundColor:"#6699ff"
+            attributeState "closed", label:'${name}', action:"switch.on", icon:"st.doors.garage.garage-closed", backgroundColor:"#79b821"
         }
-		tileAttribute ("device.lastaction", key: "SECONDARY_CONTROL") {
-				attributeState "default", label: 'last action: ${currentValue}'
+		tileAttribute ("device.lastAction", key: "SECONDARY_CONTROL") {
+				attributeState "default", label: 'Time In State: ${currentValue}'
 		}
     }
-	standardTile("contact", "device.contact") {
+	standardTile("contact", "device.contact", width: 1, height: 1) {
 			state("open", label:'${name}', icon:"st.contact.contact.open", backgroundColor:"#ffa81e")
 			state("closed", label:'${name}', icon:"st.contact.contact.closed", backgroundColor:"#79b821")
 		}
-    standardTile("refresh", "device.temperature", inactiveLabel: false, decoration: "flat") {
+    valueTile("reflection", "reflection", decoration: "flat", width: 2, height: 1) {
+    		state "reflection", label:'Reflection\r\n${currentValue}%'
+		}
+    valueTile("rssi", "device.rssi", decoration: "flat", width: 1, height: 1) {
+    		state "rssi", label:'Wifi\r\n${currentValue} dBm', unit: "",backgroundColors:[
+            		[value: 16, color: "#5600A3"],
+					[value: -31, color: "#153591"],
+					[value: -44, color: "#1e9cbb"],
+					[value: -59, color: "#90d2a7"],
+					[value: -74, color: "#44b621"],
+					[value: -84, color: "#f1d801"],
+					[value: -95, color: "#d04e00"],
+					[value: -96, color: "#bc2323"]
+				]
+		}
+    standardTile("refresh", "refresh", inactiveLabel: false, decoration: "flat") {
             state "default", action:"polling.poll", icon:"st.secondary.refresh"
         }
+    standardTile("stop", "stop") {
+        	state "default", label:"", action: "stop", icon:"http://cdn.device-icons.smartthings.com/sonos/stop-btn@2x.png"
+        }   
+    valueTile("ip", "ip", decoration: "flat", width: 2, height: 1) {
+    		state "ip", label:'IP Address\r\n${currentValue}'
+		}
+    valueTile("ssid", "ssid", decoration: "flat", width: 2, height: 1) {
+    		state "ssid", label:'Wifi SSID\r\n${currentValue}'
+		}
+    valueTile("ver", "ver", decoration: "flat", width: 2, height: 1) {
+    		state "ver", label:'FW Version\r\n${currentValue}'
+		}
         
         main "status"
-		details(["status", "contact", "lastaction", "refresh"])
+		details(["status", "contact", "reflection", "ver", "lastAction", "rssi", "stop", "ip", "ssid", "refresh"])
 	}
 }
 
@@ -78,15 +111,34 @@ def poll() {
 def refresh() {
 	log.debug "Executing 'refresh'"
     statusCommand()
+    netConfigCommand()
+    doorConfigCommand()
     
 }
 
 
 // Parse incoming device messages to generate events
 private parseDoorStatusResponse(resp) {
-    log.debug("Executing parseResponse: "+resp.data)
+    log.debug("Executing parseDoorStatusResponse: "+resp.data)
     log.debug("Output status: "+resp.status)
     if(resp.status == 200) {
+        log.debug("returnedresult: "+resp.data.result)
+        def results = (resp.data.result).tokenize('|')
+        def statusvalues = (results[0]).tokenize('=')
+        def timevalues = (results[1]).tokenize('=')
+        def sensorvalues = (results[2]).tokenize('=')
+        def signalvalues = (results[3]).tokenize('=')
+        def status = statusvalues[1]
+        sendEvent(name: 'status', value: status)
+        if(status == "open" || status == "closed"){
+        	sendEvent(name: 'contact', value: status)
+            }
+        def time = timevalues[1]
+        sendEvent(name: 'lastAction', value: time)
+        def sensor = sensorvalues[1]
+        sendEvent(name: 'reflection', value: sensor)
+        def signal = signalvalues[1]
+        sendEvent(name: 'rssi', value: signal)
         
     }else if(resp.status == 201){
         log.debug("Something was created/updated")
@@ -97,6 +149,39 @@ private parseDoorConfigResponse(resp) {
     log.debug("Executing parseResponse: "+resp.data)
     log.debug("Output status: "+resp.status)
     if(resp.status == 200) {
+        log.debug("returnedresult: "+resp.data.result)
+        def results = (resp.data.result).tokenize('|')
+        def vervalues = (results[0]).tokenize('=')
+        def rdtvalues = (results[1]).tokenize('=')
+        def mttvalues = (results[2]).tokenize('=')
+        def rltvalues = (results[3]).tokenize('=')
+        def rlpvalues = (results[4]).tokenize('=')
+        def srrvalues = (results[5]).tokenize('=')
+        def srtvalues = (results[6]).tokenize('=')
+        def aotvalues = (results[7]).tokenize('=')
+        def ansvalues = (results[8]).tokenize('=')
+        def anevalues = (results[9]).tokenize('=')
+        def ver = vervalues[1]
+        sendEvent(name: 'ver', value: ver)
+        log.debug("Firmware Version: "+ver)
+        def rdt = rdtvalues[1]
+        log.debug("Sensor Scan Interval (ms): "+rdt )
+        def mtt = mttvalues[1]
+        log.debug("Door Moving Time (ms): "+mtt )
+        def rlt = rltvalues[1]
+        log.debug("Button Press Time (ms): "+rlt )
+        def rlp = rlpvalues[1]
+        log.debug("Delay Between Consecutive Button Presses (ms): "+rlp )
+        def srr = srrvalues[1]
+        log.debug("number of sensor reads used in averaging: "+srr )
+        def srt = srtvalues[1]
+        log.debug("reflection threshold below which the door is considered open: "+srt )
+        def aot = aotvalues[1]
+        log.debug("alert for open timeout in seconds: "+aot )
+        def ans = ansvalues[1]
+        log.debug("alert for night time start in minutes from midnight: "+ans )
+        def ane = anevalues[1]
+        log.debug("alert for night time end in minutes from midnight: "+ane )
         
     }else if(resp.status == 201){
         log.debug("Something was created/updated")
@@ -107,7 +192,25 @@ private parseNetConfigResponse(resp) {
     log.debug("Executing parseResponse: "+resp.data)
     log.debug("Output status: "+resp.status)
     if(resp.status == 200) {
-        
+        log.debug("returnedresult: "+resp.data.result)
+        def results = (resp.data.result).tokenize('|')
+        def ipvalues = (results[0]).tokenize('=')
+        def snetvalues = (results[1]).tokenize('=')
+        def dgwvalues = (results[2]).tokenize('=')
+        def macvalues = (results[3]).tokenize('=')
+        def ssidvalues = (results[4]).tokenize('=')
+        def ip = ipvalues[1]
+        sendEvent(name: 'ip', value: ip)
+        log.debug("IP Address: "+ip)
+        def snet = snetvalues[1]
+        log.debug("Subnet Mask: "+snet)
+        def dgw = dgwvalues[1]
+        log.debug("Default Gateway: "+dgw)
+        def mac = macvalues[1]
+        log.debug("Mac Address: "+mac)
+        def ssid = ssidvalues[1]
+        sendEvent(name: 'ssid', value: ssid)
+        log.debug("Wifi SSID : "+ssid)
     }else if(resp.status == 201){
         log.debug("Something was created/updated")
     }
@@ -133,33 +236,35 @@ private sendCommand(method, args = []) {
     def methods = [
 		'doorStatus': [
 					uri: "${DefaultUri}",
-					path: "/v1/devices/${settings.deviceId}/doorStatus",
+					path: "/v1/devices/${deviceId}/doorStatus",
 					requestContentType: "application/json",
-					body: [access_token: settings.token]  
+					query: [access_token: token]  
                     ],
         'doorConfig': [
 					uri: "${DefaultUri}",
-					path: "/v1/devices/${settings.deviceId}/doorConfig",
+					path: "/v1/devices/${deviceId}/doorConfig",
 					requestContentType: "application/json",
-					body: [access_token: settings.token] 
+					query: [access_token: token] 
                     ],
 		'netConfig': [	
 					uri: "${DefaultUri}",
-					path: "/v1/devices/${settings.deviceId}/netConfig",
+					path: "/v1/devices/${deviceId}/netConfig",
 					requestContentType: "application/json",
-					body: [access_token: settings.token] 
+					query: [access_token: token]
                    	],
 		'setState': [	
 					uri: "${DefaultUri}",
-					path: "/v1/devices/${settings.deviceId}/setState",
+					path: "/v1/devices/${deviceId}/setState",
 					requestContentType: "application/json",
-					body: [arg:args[0] , access_token: settings.token] 
-                   	]
+                    query: [access_token: token],
+					body: args[0]
+                   	],
 		'setConfig': [	
 					uri: "${DefaultUri}",
-					path: "/v1/devices/${settings.deviceId}/setConfig",
+					path: "/v1/devices/${deviceId}/setConfig",
 					requestContentType: "application/json",
-					body: [arg:args[0] , access_token: settings.token] 
+                    query: [access_token: token],
+					body: args[0]
                    	]
 	]
 
@@ -171,34 +276,34 @@ private sendCommand(method, args = []) {
         log.debug "Executing 'sendCommand'"
         
         if (method == "doorStatus"){
-            httpPost(request) { resp ->            
+            httpGet(request) { resp ->            
                 parseDoorStatusResponse(resp)
             }
         }else if (method == "doorConfig"){
 			log.debug "calling doorConfig Method"
-            httpPost(request) { resp ->            
+            httpGet(request) { resp ->            
                 parseDoorConfigResponse(resp)
             }
 		}else if (method == "netConfig"){
 			log.debug "calling netConfig Method"
-            httpPost(request) { resp ->            
+            httpGet(request) { resp ->            
                 parseNetConfigResponse(resp)
             }
         }else if (method == "setState"){
             log.debug "calling setState Method"
-            httpGet(request) { resp ->            
+            httpPost(request) { resp ->            
                 parseResponse(resp)
 			}
         }else if (method == "setConfig"){
             log.debug "calling setState Method"
-            httpGet(request) { resp ->            
+            httpPost(request) { resp ->            
                  parseResponse(resp)
             }
         }else{
             httpGet(request)
         }
     } catch(Exception e){
-        debug("___exception: " + e)
+        log.debug("___exception: " + e)
     }
 }
 
@@ -215,6 +320,13 @@ def off() {
     refresh()
 }
 
+def stop(){
+	log.debug "Executing 'sendCommand.setState'"
+    def jsonbody = new groovy.json.JsonOutput().toJson(arg:"stop")
+	sendCommand("setState",[jsonbody])
+    statusCommand()
+}
+
 def statusCommand(){
 	log.debug "Executing 'sendCommand.statusCommand'"
 	sendCommand("doorStatus",[])
@@ -222,13 +334,13 @@ def statusCommand(){
 
 def openCommand(){
 	log.debug "Executing 'sendCommand.setState'"
-	def jsonbody = new groovy.json.JsonOutput().toJson([arg:"open"])
+    def jsonbody = new groovy.json.JsonOutput().toJson(arg:"open")
 	sendCommand("setState",[jsonbody])
 }
 
 def closeCommand(){
 	log.debug "Executing 'sendCommand.setState'"
-    def jsonbody = new groovy.json.JsonOutput().toJson([arg:"closed"])
+	def jsonbody = new groovy.json.JsonOutput().toJson(arg:"close")
 	sendCommand("setState",[jsonbody])
 }
 
@@ -239,7 +351,7 @@ def doorConfigCommand(){
 
 def SetConfigCommand(){
 	log.debug "Executing 'sendCommand.setConfig'"
-	def jsonbody = new groovy.json.JsonOutput().toJson([arg:"rdt=1000|mtt=10000|mot=2000|rlt=300|rlp=1000|srr=3|srt=25|aot=320|ans=1320|ane=360"])
+	def jsonbody = new groovy.json.JsonOutput().toJson(arg:"rdt=1000|mtt=10000|mot=2000|rlt=300|rlp=1000|srr=3|srt=25|aot=320|ans=1320|ane=360")
 	sendCommand("setConfig",[jsonbody])
 }
 
