@@ -19,6 +19,15 @@ import groovy.json.JsonOutput
 preferences {
     input("deviceId", "text", title: "Device ID")
     input("token", "text", title: "Access Token")
+	input("prdt", "text", title: "sensor scan interval in mS (default: 1000)")
+	input("pmtt", "text", title: "door moving time in mS(default: 10000)")
+	input("prlt", "text", title: "button press time mS (default: 300)")
+	input("prlp", "text", title: "delay between consecutive button presses in mS (default: 1000)")
+	input("psrr", "text", title: "number of sensor reads used in averaging (default: 3)")
+	input("psrt", "text", title: "reflection threshold below which the door is considered open (default: 25)")
+	input("paot", "text", title: "alert for open timeout in seconds (default: 320)")
+	input("pans", "text", title: " alert for night time start in minutes from midnight (default: 1320)")
+	input("pane", "text", title: " alert for night time end in minutes from midnight (default: 360)")	
 }
 
 metadata {
@@ -31,6 +40,7 @@ metadata {
 		capability "Sensor"
         capability "Refresh"
         capability "Polling"
+		capability "Configuration"
 		
         attribute "reflection", "string"
         attribute "status", "string"
@@ -93,12 +103,15 @@ tiles(scale: 2) {
     valueTile("ssid", "ssid", decoration: "flat", width: 2, height: 1) {
     		state "ssid", label:'Wifi SSID\r\n${currentValue}'
 		}
-    valueTile("ver", "ver", decoration: "flat", width: 2, height: 1) {
-    		state "ver", label:'FW Version\r\n${currentValue}'
+	valueTile("ver", "ver", decoration: "flat", width: 1, height: 1) {
+    		state "ver", label:'Version\r\n${currentValue}'
+		}
+	standardTile("configure", "device.button", width: 1, height: 1, decoration: "flat") {
+        	state "default", label: "", backgroundColor: "#ffffff", action: "configure", icon:"st.secondary.configure"
 		}
         
         main "status"
-		details(["status", "contact", "reflection", "ver", "lastAction", "rssi", "stop", "ip", "ssid", "refresh"])
+		details(["status", "contact", "reflection", "ver", "configure", "lastAction", "rssi", "stop", "ip", "ssid", "refresh"])
 	}
 }
 
@@ -116,6 +129,10 @@ def refresh() {
     
 }
 
+def configure() {
+	log.debug "Resetting Sensor Parameters to SmartThings Compatible Defaults"
+	SetConfigCommand()	
+}
 
 // Parse incoming device messages to generate events
 private parseDoorStatusResponse(resp) {
@@ -350,8 +367,17 @@ def doorConfigCommand(){
 }
 
 def SetConfigCommand(){
+	def crdt = prdt ?: 1000
+	def cmtt = pmtt ?: 10000
+	def crlt = prlt ?: 300
+	def crlp = prlp ?: 1000
+	def csrr = psrr ?: 3
+	def csrt = psrt ?: 25
+	def caot = paot ?: 320
+	def cans = pans ?: 1320
+	def cane = pane ?: 360
 	log.debug "Executing 'sendCommand.setConfig'"
-	def jsonbody = new groovy.json.JsonOutput().toJson(arg:"rdt=1000|mtt=10000|mot=2000|rlt=300|rlp=1000|srr=3|srt=25|aot=320|ans=1320|ane=360")
+	def jsonbody = new groovy.json.JsonOutput().toJson(arg:"rdt=${crdt}|mtt=${cmtt}|rlt=${crlt}|rlp=${crlp}|srr=${csrr}|srt=${csrt}|aot=${caot}|ans=${cans}|ane=${cane}")
 	sendCommand("setConfig",[jsonbody])
 }
 
