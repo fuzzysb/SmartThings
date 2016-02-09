@@ -377,8 +377,10 @@ def SetConfigCommand(){
 	def cans = pans ?: 1320
 	def cane = pane ?: 360
 	log.debug "Executing 'sendCommand.setConfig'"
-	def jsonbody = new groovy.json.JsonOutput().toJson(arg:"rdt=${crdt}|mtt=${cmtt}|rlt=${crlt}|rlp=${crlp}|srr=${csrr}|srt=${csrt}|aot=${caot}|ans=${cans}|ane=${cane}")
+	def jsonbody = new groovy.json.JsonOutput().toJson(arg:"rdt=" + crdt +"|mtt=" + cmtt + "|rlt=" + crlt + "|rlp=" + crlp +"|srr=" + csrr + "|srt=" + csrt)
 	sendCommand("setConfig",[jsonbody])
+    jsonbody = new groovy.json.JsonOutput().toJson(arg:"aot=" + caot + "|ans=" + cans + "|ane=" + cane)
+    sendCommand("setConfig",[jsonbody])
 }
 
 def netConfigCommand(){
