@@ -1,5 +1,5 @@
 /**
- *  Garadget Device Handler
+ *  Garadget Integration
  *
  *  Copyright 2016 Stuart Buchanan based loosely based on original code by Krishnaraj Varma with thanks
  *
@@ -12,13 +12,13 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- * 12/02/2016 V1.3 updated with to remove token and DeviceId parameters from inputs to retrieving from dni
  */
  
- 
 import groovy.json.JsonOutput
-
+ 
 preferences {
+    input("deviceId", "text", title: "Device ID")
+    input("token", "text", title: "Access Token")
 	input("prdt", "text", title: "sensor scan interval in mS (default: 1000)")
 	input("pmtt", "text", title: "door moving time in mS(default: 10000)")
 	input("prlt", "text", title: "button press time mS (default: 300)")
@@ -247,16 +247,9 @@ private parseResponse(resp) {
     }
 }
 
-private getDeviceDetails() {
-def fullDni = device.deviceNetworkId
-return fullDni
-}
 
 private sendCommand(method, args = []) {
 	def DefaultUri = "https://api.particle.io"
-    def cdni = getDeviceDetails().tokenize(':')
-	def deviceId = cdni[0] 
-	def token = cdni[1]
     def methods = [
 		'doorStatus': [
 					uri: "${DefaultUri}",
