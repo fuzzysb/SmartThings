@@ -12,9 +12,10 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ * 13/02/2016 V1.1 added the correct call for API url for EU/US servers, left to do: cleanup child devices when removed from setup 
  * 12/02/2016 V1.0 initial release, left to do: cleanup child devices when removed from setup 
  */
- 
+  
  import java.text.DecimalFormat
  import groovy.json.JsonSlurper
  import groovy.json.JsonOutput
@@ -25,7 +26,7 @@ private getVendorTokenPath(){ "https://api.particle.io/oauth/token" }
 private getVendorIcon()		{ "https://dl.dropboxusercontent.com/s/lkrub180btbltm8/garadget_128.png" }
 private getClientId() 		{ appSettings.clientId }
 private getClientSecret() 	{ appSettings.clientSecret }
-private getServerUrl() 		{ if(!appSettings.serverUrl){return "https://graph-eu01-euwest1.api.smartthings.com"} }
+private getServerUrl() 		{ if(!appSettings.serverUrl){return getApiServerUrl()} }
 
  
  // Automatically generated. Make future change here.
@@ -282,9 +283,7 @@ def initialize() {
     	def item = device.tokenize('|')
         def deviceId = item[0]
         def deviceName = item[1]
-
         def existingDevices = children.find{ d -> d.deviceNetworkId.contains(deviceId) } 
-        
     		if(!existingDevices) {
 				try {
 					createChildDevice("Garadget", deviceId + ":" + state.garadgetAccessToken, "${deviceName}", deviceName)
@@ -294,19 +293,8 @@ def initialize() {
     		}
 		}	
     }
+   
     
-    /*
-    // Delete any that are no longer in settings
-    def selectedNameList = []
-    settings.devices.each { seldevice ->
-    	def devicelist = seldevice.tokenize('|')
-        selectedNameList << "${devicelist[1]}"
-    }
-	children.removeAll{selectedNameList.contains(it)}
-    if(delete){
-    	removeChildDevices(delete)
-    }
-    */
 	// Do the initial poll
 	poll()
 	// Schedule it to run every 5 minutes
