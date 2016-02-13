@@ -12,7 +12,6 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- * 13/02/2016 V1.4 added Delay equal to the devices mtt parameter to instantly refresh the garage door status after the transition time
  * 12/02/2016 V1.3 updated with to remove token and DeviceId parameters from inputs to retrieving from dni
  */
  
@@ -185,7 +184,6 @@ private parseDoorConfigResponse(resp) {
         def rdt = rdtvalues[1]
         log.debug("Sensor Scan Interval (ms): "+rdt )
         def mtt = mttvalues[1]
-		sendEvent(name: 'mtt', value: mtt)
         log.debug("Door Moving Time (ms): "+mtt )
         def rlt = rltvalues[1]
         log.debug("Button Press Time (ms): "+rlt )
@@ -336,18 +334,14 @@ private sendCommand(method, args = []) {
 
 def on() {
 	log.debug "Executing 'on'"
-	openCommand(),
-    refresh(),
-	"delay ${mtt}",
-	refresh()
+	openCommand()
+    statusCommand()
 }
 
 def off() {
 	log.debug "Executing 'off'"
-	closeCommand(),
-    refresh(),
-	"delay ${mtt}",
-	refresh()
+	closeCommand()
+	statusCommand()
 }
 
 def stop(){
