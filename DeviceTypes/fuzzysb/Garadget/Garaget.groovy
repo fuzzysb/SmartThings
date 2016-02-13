@@ -12,6 +12,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ * 13/02/2016 V1.4 added Delay equal to the devices mtt parameter to instantly refresh the garage door status after the transition time
  * 12/02/2016 V1.3 updated with to remove token and DeviceId parameters from inputs to retrieving from dni
  */
  
