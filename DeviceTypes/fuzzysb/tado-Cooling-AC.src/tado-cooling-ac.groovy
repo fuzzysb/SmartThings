@@ -13,6 +13,7 @@
  *	Tado Thermostat
  *
  *	Author: Stuart Buchanan, Based on original work by Ian M with thanks
+ *  Date: 2016-02-14 v1.2 amended the thermostat properties to match the ST Capability.Thermostat values
  *  Date: 2016-01-23 v1.1 fixed error in Tado Mode detection
  *	Date: 2016-01-22 v1.1 Add Heating & Cooling Controls (initial offering, will need to look into adding all possible commands)
  *	Date: 2015-12-04 v1.0 Initial Release With Temperatures & Relative Humidity
@@ -82,7 +83,7 @@ metadata {
             state("OFF", label:'${name}', backgroundColor:"#ffffff", icon:"st.switches.switch.off", defaultState: true)  
 		}
         
-		valueTile("setPointTemp", "device.setPointTemp", width: 2, height: 1, decoration: "flat") {
+		valueTile("thermostatSetpoint", "device.thermostatSetpoint", width: 2, height: 1, decoration: "flat") {
 			state "default", label: 'Set Point\r\n\${currentValue}° C'
 		}
 		
@@ -123,7 +124,7 @@ metadata {
         }
 		
 		main(["thermostat"])
-		details(["thermostat","ACMode","coolingSetpointUp","coolingSetpointDown","autoOperation","heatingSetpointUp","heatingSetpointDown","outsidetemperature","setPointTemp","ACFanSpeed","refresh","setAuto","setDry","setOn","setOff"])
+		details(["thermostat","ACMode","coolingSetpointUp","coolingSetpointDown","autoOperation","heatingSetpointUp","heatingSetpointDown","outsidetemperature","thermostatSetpoint","ACFanSpeed","refresh","setAuto","setDry","setOn","setOff"])
 	}
 }
 
@@ -184,14 +185,14 @@ private parseHvacResponse(resp) {
 	}	
 	def ACMode
     def ACFanSpeed
-    def setPointTemp
+    def thermostatSetpoint
     if (resp.data.acSetting.power == "OFF"){
        	ACMode = "OFF"
         log.debug("Read ACMode: " + ACMode)
 		ACFanSpeed = "OFF"
         log.debug("Read acFanSpeed: " + ACFanSpeed)
-		setPointTemp = "0"
-        log.debug("Read setPointTemp: " + setPointTemp)
+		thermostatSetpoint = "0"
+        log.debug("Read thermostatSetpoint: " + thermostatSetpoint)
     }
     else if (resp.data.acSetting.power == "ON"){
        	ACMode = resp.data.acSetting.mode
@@ -199,13 +200,13 @@ private parseHvacResponse(resp) {
 		ACFanSpeed = resp.data.acSetting.fanSpeed
         log.debug("Read acFanSpeed: " + ACFanSpeed)
         if (ACMode == "DRY"){
-        	setPointTemp = "--"
+        	thermostatSetpoint = "--"
         }else if (ACMode == "AUTO"){
-                	setPointTemp = "--"
+                	thermostatSetpoint = "--"
         }else{
-        	setPointTemp = Math.round(resp.data.acSetting.temperature.celsius)
+        	thermostatSetpoint = Math.round(resp.data.acSetting.temperature.celsius)
         }
-        log.debug("Read setPointTemp: " + setPointTemp)
+        log.debug("Read thermostatSetpoint: " + thermostatSetpoint)
     }
 	else{
         log.debug("Executing parseHvacResponse.successFalse")
@@ -214,8 +215,8 @@ private parseHvacResponse(resp) {
     log.debug("Send ACFanSpeed Event Fired")
 	sendEvent(name: 'ACMode', value: ACMode)
     log.debug("Send ACMode Event Fired")
-    sendEvent(name: 'setPointTemp', value: setPointTemp, unit: temperatureUnit)
-    log.debug("Send setPointTemp Event Fired")
+    sendEvent(name: 'thermostatSetpoint', value: thermostatSetpoint, unit: temperatureUnit)
+    log.debug("Send thermostatSetpoint Event Fired")
 	
 
 }
@@ -282,15 +283,15 @@ def setHeatingSetpoint(targetTemperature) {
 }
 
 def heatingSetpointUp(){
-	log.debug "Current SetPoint Is " + (device.currentValue("setPointTemp")).toString()
-	int newSetpoint = (device.currentValue("setPointTemp")).toInteger() + 1
+	log.debug "Current SetPoint Is " + (device.currentValue("thermostatSetpoint")).toString()
+	int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() + 1
 	log.debug "Setting heatingSetpoint up to: ${newSetpoint}"
 	setHeatingSetpoint(newSetpoint)
 }
 
 def heatingSetpointDown(){
-	log.debug "Current SetPoint Is " + (device.currentValue("setPointTemp")).toString()
-	int newSetpoint = (device.currentValue("setPointTemp")).toInteger() - 1
+	log.debug "Current SetPoint Is " + (device.currentValue("thermostatSetpoint")).toString()
+	int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() - 1
 	log.debug "Setting heatingSetpoint down to: ${newSetpoint}"
 	setHeatingSetpoint(newSetpoint)
 }
@@ -303,15 +304,15 @@ def setCoolingSetpoint(targetTemperature) {
 }
 
 def coolingSetpointUp(){
-	log.debug "Current SetPoint Is " + (device.currentValue("setPointTemp")).toString()
-	int newSetpoint = (device.currentValue("setPointTemp")).toInteger() + 1
+	log.debug "Current SetPoint Is " + (device.currentValue("thermostatSetpoint")).toString()
+	int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() + 1
 	log.debug "Setting coolingSetpoint up to: ${newSetpoint}"
 	setHeatingSetpoint(newSetpoint)
 }
 
 def coolingSetpointDown(){
-	log.debug "Current SetPoint Is " + (device.currentValue("setPointTemp")).toString()
-	int newSetpoint = (device.currentValue("setPointTemp")).toInteger() - 1
+	log.debug "Current SetPoint Is " + (device.currentValue("thermostatSetpoint")).toString()
+	int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() - 1
 	log.debug "Setting coolingSetpoint down to: ${newSetpoint}"
 	setHeatingSetpoint(newSetpoint)
 }
