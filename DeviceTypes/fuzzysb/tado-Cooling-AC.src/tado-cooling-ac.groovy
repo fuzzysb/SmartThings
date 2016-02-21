@@ -13,6 +13,7 @@
  *	Tado Thermostat
  *
  *	Author: Stuart Buchanan, Based on original work by Ian M with thanks
+ *  Date: 2016-02-21 v1.4 added HeatingSetPoint & CoolingSetPoint to make compatible with SmartTiles
  *  Date: 2016-02-21 v1.3 amended the read thermostat properties to match the ST Thermostat Capability
  *  Date: 2016-02-14 v1.2 amended the thermostat properties to match the ST Capability.Thermostat values
  *  Date: 2016-01-23 v1.1 fixed error in Tado Mode detection
@@ -85,6 +86,14 @@ metadata {
 		}
         
 		valueTile("thermostatSetpoint", "device.thermostatSetpoint", width: 2, height: 1, decoration: "flat") {
+			state "default", label: 'Set Point\r\n\${currentValue}° C'
+		}
+        
+        valueTile("heatingSetpoint", "device.heatingSetpoint", width: 2, height: 1, decoration: "flat") {
+			state "default", label: 'Set Point\r\n\${currentValue}° C'
+		}
+        
+        valueTile("coolingSetpoint", "device.coolingSetpoint", width: 2, height: 1, decoration: "flat") {
 			state "default", label: 'Set Point\r\n\${currentValue}° C'
 		}
 		
@@ -218,6 +227,10 @@ private parseHvacResponse(resp) {
     log.debug("Send thermostatOperatingState Event Fired")
     sendEvent(name: 'thermostatSetpoint', value: thermostatSetpoint, unit: temperatureUnit)
     log.debug("Send thermostatSetpoint Event Fired")
+    sendEvent(name: 'heatingSetpoint', value: thermostatSetpoint, unit: temperatureUnit)
+    log.debug("Send heatingSetpoint Event Fired")
+    sendEvent(name: 'coolingSetpoint', value: thermostatSetpoint, unit: temperatureUnit)
+    log.debug("Send coolingSetpoint Event Fired")
 	
 
 }
