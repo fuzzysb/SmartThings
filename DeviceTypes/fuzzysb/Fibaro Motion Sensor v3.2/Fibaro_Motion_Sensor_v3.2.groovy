@@ -153,8 +153,7 @@ def configure() {
 	cmds << zwave.associationV2.associationSet(groupingIdentifier:4, nodeId:[zwaveHubNodeId]).format()
 	cmds << zwave.associationV2.associationSet(groupingIdentifier:5, nodeId:[zwaveHubNodeId]).format()
 
-	// turn on tamper sensor with active/inactive reports (use it as an acceleration sensor) default is 0, or off
-	cmds << zwave.configurationV1.configurationSet(configurationValue: [4], parameterNumber: 24, size: 1).format()
+	cmds << zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 24, size: 1).format()
     cmds << zwave.configurationV1.configurationGet(parameterNumber: 24).format()
         
     // temperature change report threshold (0-255 = 0.1 to 25.5C) default is 1.0 Celcius, setting to .5 Celcius
@@ -287,6 +286,7 @@ def zwaveEvent(physicalgraph.zwave.commands.sensormultilevelv2.SensorMultilevelR
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.notificationv3.NotificationReport cmd) {
+def result = null
 log.debug("Hit notifcation Section with command : " + cmd)
 if (cmd.notificationType == 7 && cmd.event == 8) {
 	if (cmd.notificationStatus == 255) {
