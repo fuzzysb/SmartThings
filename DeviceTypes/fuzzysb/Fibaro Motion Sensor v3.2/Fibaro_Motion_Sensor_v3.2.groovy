@@ -295,10 +295,10 @@ def zwaveEvent(physicalgraph.zwave.commands.notificationv3.NotificationReport cm
 		log.debug "Vibration Detected"
 		result = createEvent(name: "acceleration", value: "active", descriptionText: "$device.displayName Vibration Detected")
 	} else if (cmd.notificationType == 7 && cmd.event == 0)	{
-		if (cmd.eventParameter == 8) {
+		if (cmd.eventParameter == [8]) {
 			log.debug "Motion No Longer Detected"
 			result = createEvent(name: "motion", value: "inactive", descriptionText: "$device.displayName Motion is not Detected")
-		} else if (cmd.eventParameter == 8) {
+		} else if (cmd.eventParameter == [3]) {
 			log.debug "Vibration No Longer Detected"
 			result = createEvent(name: "acceleration", value: "inactive", descriptionText: "$device.displayName Vibration No Longer Detected")
 		}
