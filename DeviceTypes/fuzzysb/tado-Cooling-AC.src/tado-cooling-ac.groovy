@@ -13,6 +13,7 @@
  *	Tado Thermostat
  *
  *	Author: Stuart Buchanan, Based on original work by Ian M with thanks
+ *  Date: 2016-02-21 v1.5 switched around thermostatOperatingState & thermostatMode to get better compatibility with Home Remote
  *  Date: 2016-02-21 v1.4 added HeatingSetPoint & CoolingSetPoint to make compatible with SmartTiles
  *  Date: 2016-02-21 v1.3 amended the read thermostat properties to match the ST Thermostat Capability
  *  Date: 2016-02-14 v1.2 amended the thermostat properties to match the ST Capability.Thermostat values
@@ -64,7 +65,7 @@ metadata {
 			}
 		}
         
-        standardTile("thermostatMode", "device.thermostatMode", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true) {         
+        standardTile("thermostatOperatingState", "device.thermostatOperatingState", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true) {         
 			state("SLEEP", label:'${name}', backgroundColor:"#0164a8", icon:"st.Bedroom.bedroom2")
             state("HOME", label:'${name}', backgroundColor:"#fab907", icon:"st.Home.home2")
             state("AWAY", label:'${name}', backgroundColor:"#62aa12", icon:"st.Outdoor.outdoor18")
@@ -76,7 +77,7 @@ metadata {
 			state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
 		}
         
-        standardTile("thermostatOperatingState", "device.thermostatOperatingState", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true) {
+        standardTile("thermostatMode", "device.thermostatMode", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true) {
         	state("HEAT", label:'${name}', backgroundColor:"#ea2a2a", icon:"st.Weather.weather14")
             state("COOL", label:'${name}', backgroundColor:"#089afb", icon:"st.Weather.weather7")
             state("DRY", label:'${name}', backgroundColor:"#ab7e13", icon:"st.Weather.weather12")
@@ -134,7 +135,7 @@ metadata {
         }
 		
 		main(["thermostat"])
-		details(["thermostat","thermostatOperatingState","coolingSetpointUp","coolingSetpointDown","autoOperation","heatingSetpointUp","heatingSetpointDown","outsidetemperature","thermostatSetpoint","thermostatFanMode","refresh","setAuto","setDry","setOn","setOff"])
+		details(["thermostat","thermostatMode","coolingSetpointUp","coolingSetpointDown","autoOperation","heatingSetpointUp","heatingSetpointDown","outsidetemperature","thermostatSetpoint","thermostatFanMode","refresh","setAuto","setDry","setOn","setOff"])
 	}
 }
 
@@ -161,8 +162,8 @@ private parseResponse(resp) {
         }else if(resp.data.operation == "MANUAL"){
         	autoOperation = "MANUAL"
         }
-        log.debug("Read thermostatMode: " + autoOperation)
-        sendEvent(name: 'thermostatMode', value: autoOperation)
+        log.debug("Read thermostatOperatingState: " + autoOperation)
+        sendEvent(name: 'thermostatOperatingState', value: autoOperation)
         log.debug("Send thermostatMode Event Fired")
         
     }else if(resp.status == 201){
@@ -198,7 +199,7 @@ private parseHvacResponse(resp) {
     def thermostatSetpoint
     if (resp.data.acSetting.power == "OFF"){
        	ACMode = "OFF"
-        log.debug("Read thermostatOperatingState: " + ACMode)
+        log.debug("Read thermostatMode: " + ACMode)
 		ACFanSpeed = "OFF"
         log.debug("Read thermostatFanMode: " + ACFanSpeed)
 		thermostatSetpoint = "0"
@@ -206,7 +207,7 @@ private parseHvacResponse(resp) {
     }
     else if (resp.data.acSetting.power == "ON"){
        	ACMode = resp.data.acSetting.mode
-		log.debug("thermostatOperatingState: " + ACMode)
+		log.debug("thermostatMode: " + ACMode)
 		ACFanSpeed = resp.data.acSetting.fanSpeed
         log.debug("Read thermostatFanMode: " + ACFanSpeed)
         if (ACMode == "DRY"){
@@ -223,8 +224,8 @@ private parseHvacResponse(resp) {
     }
     sendEvent(name: 'thermostatFanMode', value: ACFanSpeed)
     log.debug("Send thermostatFanMode Event Fired")
-	sendEvent(name: 'thermostatOperatingState', value: ACMode)
-    log.debug("Send thermostatOperatingState Event Fired")
+	sendEvent(name: 'thermostatMode', value: ACMode)
+    log.debug("Send thermostatMode Event Fired")
     sendEvent(name: 'thermostatSetpoint', value: thermostatSetpoint, unit: temperatureUnit)
     log.debug("Send thermostatSetpoint Event Fired")
     sendEvent(name: 'heatingSetpoint', value: thermostatSetpoint, unit: temperatureUnit)
