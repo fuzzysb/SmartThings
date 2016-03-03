@@ -20,6 +20,7 @@
  *
  ***************************************************************************************
  * Based on Original Code by Tony Wackford and Smartthings
+ * Amended Device Fingerprint as provided from Community
  * Updated with new Debug logging and Notification Report Section
  * Initial Test Release for v3.2 of the Fibaro Motion Sensor
  */
@@ -46,8 +47,33 @@
         command		"updateZwaveParam"
         command		"test"
         command		"configure"
-
-		fingerprint deviceId: "0x2001", inClusters: "0x30,0x84,0x85,0x80,0x8F,0x56,0x72,0x86,0x70,0x8E,0x31,0x9C,0xEF,0x30,0x31,0x9C,0x98,0x71"
+		 
+		/* Capability notes
+        0x5E COMMAND_CLASS_ZWAVE_PLUS_INFO 2
+		0x20 COMMAND_CLASS_BASIC 1
+		0x86 COMMAND_CLASS_VERSION 2
+		0x72 COMMAND_CLASS_MANUFACTURER_SPECIFIC 2
+		0x5A COMMAND_CLASS_DEVICE_RESET_LOCALLY 1
+		0x59 COMMAND_CLASS_ASSOCIATION_GRP_INFO  1
+		0x85 COMMAND_CLASS_ASSOCIATION 2
+		0x73 COMMAND_CLASS_POWERLEVEL 1
+		0x84 COMMAND_CLASS_WAKE_UP 2
+		0x80 COMMAND_CLASS_BATTERY 1
+		0x71 COMMAND_CLASS_NOTIFICATION 3
+		0x56 COMMAND_CLASS_CRC16_ENCAP 1
+		0x70 COMMAND_CLASS_CONFIGURATION 2
+		0x31 COMMAND_CLASS_SENSOR_MULTILEVEL 5
+		0x8E COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION 2
+		0x22 COMMAND_CLASS_APPLICATION_STATUS 1
+		0x30 COMMAND_CLASS_SENSOR_BINARY 2
+		0x9C COMMAND_CLASS_SENSOR_ALARM 1
+		0x98 COMMAND_CLASS_SECURITY 1
+		0x7A COMMAND_CLASS_FIRMWARE_UPDATE_MD 1
+        */
+		 
+		 
+        fingerprint deviceId: "0x0701" inClusters "0x5E,0x20,0x86,0x72,0x5A,0x59,0x85,0x73,0x84,0x80,0x71,0x56,0x70,0x31,0x8E,0x22,0x30,0x9C,0x98,0x7A"
+		//fingerprint deviceId: "0x2001", inClusters: "0x30,0x84,0x85,0x80,0x8F,0x56,0x72,0x86,0x70,0x8E,0x31,0x9C,0xEF,0x30,0x31,0x9C,0x98,0x71"
 	}
 
 	simulator {
