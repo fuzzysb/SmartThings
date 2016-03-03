@@ -46,7 +46,7 @@
         command		"test"
         command		"configure"
 
-		fingerprint deviceId: "0x2001", inClusters: "0x30,0x84,0x85,0x80,0x8F,0x56,0x72,0x86,0x70,0x8E,0x31,0x9C,0xEF,0x30,0x31,0x9C,0x98"
+		fingerprint deviceId: "0x2001", inClusters: "0x30,0x84,0x85,0x80,0x8F,0x56,0x72,0x86,0x70,0x8E,0x31,0x9C,0xEF,0x30,0x31,0x9C,0x98,0x71"
 	}
 
 	simulator {
@@ -147,7 +147,7 @@ def parse(String description)
 {
 	state.sec = 0
 	def result = []
-	def cmd = zwave.parse(description, [0x72: 2, 0x31: 2, 0x30: 1, 0x84: 1, 0x9C: 1, 0x70: 2, 0x80: 1, 0x86: 1, 0x7A: 1, 0x56: 1, 0x98: 1])
+	def cmd = zwave.parse(description, [0x72: 2, 0x31: 2, 0x30: 1, 0x84: 1, 0x9C: 1, 0x70: 2, 0x80: 1, 0x86: 1, 0x7A: 1, 0x56: 1, 0x98: 1, 0x71: 3])
     
     if (description == "updated") {
         result << response(zwave.wakeUpV1.wakeUpIntervalSet(seconds: 7200, nodeid:zwaveHubNodeId))
@@ -169,7 +169,7 @@ def parse(String description)
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.securityv1.SecurityMessageEncapsulation cmd) {
-	def encapsulatedCommand = cmd.encapsulatedCommand([0x72: 2, 0x31: 2, 0x30: 1, 0x84: 1, 0x9C: 1, 0x70: 2, 0x80: 1, 0x86: 1, 0x7A: 1, 0x56: 1])
+	def encapsulatedCommand = cmd.encapsulatedCommand([0x72: 2, 0x31: 2, 0x30: 1, 0x84: 1, 0x9C: 1, 0x70: 2, 0x80: 1, 0x86: 1, 0x7A: 1, 0x56: 1, 0x71: 3])
 	state.sec = 1
 	log.debug "encapsulated: ${encapsulatedCommand}"
 	if (encapsulatedCommand) {
@@ -256,6 +256,26 @@ def zwaveEvent(physicalgraph.zwave.commands.sensormultilevelv2.SensorMultilevelR
 			break;
 	}
 	map
+}
+
+def zwaveEvent(physicalgraph.zwave.commands.notificationv3.NotificationReport cmd) {
+if (cmd.notificationType == 7 && cmd.event == 3) {
+	if (cmd.notificationStatus == 255) {
+		log.debug "Motion Detected"
+		sendEvent(name: "motion", value: "active", descriptionText: "$device.displayName Motion Detected", isStateChange: true)
+	} else if (cmd.notificationStatus == 0) {
+		log.debug "Motion No Longer Detected"
+		sendEvent(name: "motion", value: "inactive", descriptionText: "$device.displayName Motion No Longer Detected", isStateChange: true)
+	}
+} else if (cmd.notificationType == 7 && cmd.event == 8) {
+	if (cmd.notificationStatus == 255) {
+		log.debug "Vibration Detected"
+		sendEvent(name: "acceleration", value: "active", descriptionText: "$device.displayName Vibration Detected", isStateChange: true)
+	} else if (cmd.notificationStatus == 0) {
+		log.debug "Vibration No Longer Detected"
+		sendEvent(name: "acceleration", value: "inactive", descriptionText: "$device.displayName Vibration No Longer Detected", isStateChange: true)
+	}
+}
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.batteryv1.BatteryReport cmd) {
