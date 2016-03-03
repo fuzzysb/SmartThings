@@ -20,6 +20,7 @@
  *
  ***************************************************************************************
  * Based on Original Code by Tony Wackford and Smartthings
+ * Updated with new Debug logging and Notification Report Section
  * Initial Test Release for v3.2 of the Fibaro Motion Sensor
  */
  
@@ -215,7 +216,7 @@ def createEvent(physicalgraph.zwave.commands.firmwareupdatemdv1.FirmwareMdReport
     log.debug "firmwareId:     ${cmd.firmwareId}"
     log.debug "manufacturerId: ${cmd.manufacturerId}"
 }
-
+/*
 def zwaveEvent(physicalgraph.zwave.commands.sensoralarmv1.SensorAlarmReport cmd)
 {
 	def map = [:]
@@ -230,6 +231,7 @@ def zwaveEvent(physicalgraph.zwave.commands.sensoralarmv1.SensorAlarmReport cmd)
 	}
     map
 }
+*/
 
 // Event Generation
 def zwaveEvent(physicalgraph.zwave.commands.wakeupv1.WakeUpNotification cmd)
@@ -260,23 +262,24 @@ def zwaveEvent(physicalgraph.zwave.commands.sensormultilevelv2.SensorMultilevelR
 
 def zwaveEvent(physicalgraph.zwave.commands.notificationv3.NotificationReport cmd) {
 log.debug("Hit notifcation Section with command : " + cmd)
-if (cmd.notificationType == 7 && cmd.event == 3) {
+if (cmd.notificationType == 7 && cmd.event == 8) {
 	if (cmd.notificationStatus == 255) {
 		log.debug "Motion Detected"
-		sendEvent(name: "motion", value: "active", descriptionText: "$device.displayName Motion Detected", isStateChange: true)
+		result = createEvent(name: "motion", value: "active", descriptionText: "$device.displayName Motion is Detected")
 	} else if (cmd.notificationStatus == 0) {
 		log.debug "Motion No Longer Detected"
-		sendEvent(name: "motion", value: "inactive", descriptionText: "$device.displayName Motion No Longer Detected", isStateChange: true)
+		result = createEvent(name: "motion", value: "inactive", descriptionText: "$device.displayName Motion is not Detected")
 	}
-} else if (cmd.notificationType == 7 && cmd.event == 8) {
+} else if (cmd.notificationType == 7 && cmd.event == 3) {
 	if (cmd.notificationStatus == 255) {
 		log.debug "Vibration Detected"
-		sendEvent(name: "acceleration", value: "active", descriptionText: "$device.displayName Vibration Detected", isStateChange: true)
+		result = createEvent(name: "acceleration", value: "active", descriptionText: "$device.displayName Vibration Detected")
 	} else if (cmd.notificationStatus == 0) {
 		log.debug "Vibration No Longer Detected"
-		sendEvent(name: "acceleration", value: "inactive", descriptionText: "$device.displayName Vibration No Longer Detected", isStateChange: true)
+		result = createEvent(name: "acceleration", value: "inactive", descriptionText: "$device.displayName Vibration No Longer Detected")
 	}
 }
+return result
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.batteryv1.BatteryReport cmd) {
@@ -288,7 +291,7 @@ log.debug cmd
 	map.displayed = false
 	map
 }
-
+/*
 def zwaveEvent(physicalgraph.zwave.commands.sensorbinaryv1.SensorBinaryReport cmd) {
 	def map = [:]
 	map.value = cmd.sensorValue ? "active" : "inactive"
@@ -314,6 +317,7 @@ def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicSet cmd) {
 	}
 	map
 }
+*/
 
 def zwaveEvent(physicalgraph.zwave.Command cmd) {
 	log.debug "Catchall reached for cmd: ${cmd.toString()}}"
