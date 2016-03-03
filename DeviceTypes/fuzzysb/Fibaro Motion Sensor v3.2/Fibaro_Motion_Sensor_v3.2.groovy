@@ -259,6 +259,7 @@ def zwaveEvent(physicalgraph.zwave.commands.sensormultilevelv2.SensorMultilevelR
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.notificationv3.NotificationReport cmd) {
+log.debug("Hit notifcation Section with command : " + cmd)
 if (cmd.notificationType == 7 && cmd.event == 3) {
 	if (cmd.notificationStatus == 255) {
 		log.debug "Motion Detected"
