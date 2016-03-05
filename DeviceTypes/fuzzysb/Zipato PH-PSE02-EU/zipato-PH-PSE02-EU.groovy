@@ -38,8 +38,8 @@ simulator {
  tiles(scale: 2) {
 	multiAttributeTile(name:"alarm", type: "generic", width: 6, height: 4){
 		tileAttribute ("device.alarm", key: "PRIMARY_CONTROL") {
-			attributeState "off", label:'off', action:'alarm.off', icon:"st.alarm.alarm.alarm", backgroundColor:"#ffffff"
-			attributeState "both", label:'alarm!', action:'alarm.on', icon:"st.alarm.alarm.alarm", backgroundColor:"#e86d13"
+			attributeState "off", label:'off', action:'alarm.siren', icon:"st.alarm.alarm.alarm", backgroundColor:"#ffffff"
+			attributeState "both", label:'alarm!', action:'alarm.off', icon:"st.alarm.alarm.alarm", backgroundColor:"#e86d13"
 		}
 	}
 	standardTile("Emergency", "device.button", inactiveLabel: false, decoration: "flat", width: 1, height: 1) {
@@ -143,6 +143,18 @@ if (cmd.notificationType == 6 && cmd.event == 22) {
 def zwaveEvent(physicalgraph.zwave.Command cmd) {
 	log.debug "Unhandled: $cmd"
     createEvent(descriptionText: cmd.toString(), isStateChange: false)
+}
+
+def strobe() {
+	on()
+}
+
+def siren() {
+	on()
+}
+
+def both() {
+	on()
 }
 
 
