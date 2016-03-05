@@ -15,6 +15,13 @@
  *	Author: fuzzysb
  *	Date: 2015-01-05
  */
+ 
+ 
+ 
+preferences {
+ input "defaultSound", "enum", title: "Default Sound to use for the Siren?", options: ["Emergency","FireAlarm","Ambulance","PoliceCar","DoorChime"], required: false, defaultValue: "Emergency"
+}
+ 
 metadata {
  definition (name: "Dlink DCH-Z510", namespace: "fuzzysb", author: "Stuart Buchanan") {
 	capability "Actuator"
@@ -158,11 +165,32 @@ def both() {
 }
 
 def on() {
-	log.debug "sending on"
-	[
-		secure(zwave.basicV1.basicSet(value: 0xFF)),
-		secure(zwave.basicV1.basicGet())
-	]
+	log.debug("Sounding Siren")
+	switch ( settings.defaultSound ) {
+		case "Emergency":
+		Emergency()
+		break
+		
+		case "FireAlarm":
+		FireAlarm()
+		break
+		
+		case "Ambulance":
+		Ambulance()
+		break
+		
+		case "PoliceCar":
+		PoliceCar()
+		break
+		
+		case "DoorChime":
+		DoorChime()
+		break
+		
+		default:
+		Emergency()
+		break
+	}
 }
 
 def off() {
