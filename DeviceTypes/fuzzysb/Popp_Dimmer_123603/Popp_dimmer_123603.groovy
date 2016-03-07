@@ -58,12 +58,6 @@ metadata {
 			}
 		}
 
-		standardTile("indicator", "device.indicatorStatus", width: 2, height: 2, inactiveLabel: false, decoration: "flat") {
-			state "when off", action:"indicator.indicatorWhenOn", icon:"st.indicators.lit-when-off"
-			state "when on", action:"indicator.indicatorNever", icon:"st.indicators.lit-when-on"
-			state "never", action:"indicator.indicatorWhenOff", icon:"st.indicators.never-lit"
-		}
-
 		standardTile("refresh", "device.switch", width: 2, height: 2, inactiveLabel: false, decoration: "flat") {
 			state "default", label:'', action:"refresh.refresh", icon:"st.secondary.refresh"
 		}
@@ -73,7 +67,7 @@ metadata {
 		}
 
 		main(["switch"])
-		details(["switch", "level", "indicator", "refresh"])
+		details(["switch", "level", "refresh"])
 
 	}
 }
@@ -202,21 +196,6 @@ def refresh() {
 		commands << zwave.manufacturerSpecificV1.manufacturerSpecificGet().format()
 	}
 	delayBetween(commands,100)
-}
-
-def indicatorWhenOn() {
-	sendEvent(name: "indicatorStatus", value: "when on")
-	zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 3, size: 1).format()
-}
-
-def indicatorWhenOff() {
-	sendEvent(name: "indicatorStatus", value: "when off")
-	zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 3, size: 1).format()
-}
-
-def indicatorNever() {
-	sendEvent(name: "indicatorStatus", value: "never")
-	zwave.configurationV1.configurationSet(configurationValue: [2], parameterNumber: 3, size: 1).format()
 }
 
 def invertSwitch(invert=true) {
