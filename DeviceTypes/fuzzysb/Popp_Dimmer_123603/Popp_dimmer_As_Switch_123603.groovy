@@ -146,7 +146,7 @@ def zwaveEvent(physicalgraph.zwave.Command cmd) {
 
 def on() {
 	delayBetween([
-			setLevel(100)
+			setLevel(100),
 			zwave.basicV1.basicSet(value: 0xFF).format(),
 			zwave.switchMultilevelV1.switchMultilevelGet().format()
 	],5000)
