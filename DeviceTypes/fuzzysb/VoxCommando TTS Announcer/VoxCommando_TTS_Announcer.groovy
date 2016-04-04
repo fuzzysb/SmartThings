@@ -13,40 +13,49 @@
 * 	VoxCommando TTS Announcer
 * 
 * 	Author Stuart Buchanan
-* 	Date 2016-03-028 v1.0 Initial Release
+* 	Date 2016-04-04 v1.0 updated with new options in latest vox commando beta
+* 	Date 2016-03-28 v1.0 Initial Release
 **/ 
 preferences {
 	input("ServerIP", "text", title: "ServerIP", description: "Enter the IP Address of the Voxcommando Web Server")
 	input("Port", "text", title: "Port", description: "Enter the TCP Port of the Voxcommando Web Server")
+    input("DefaultVolume", "number", title: "Default Announcement Volume", description: "Enter the Default Volume % for Announcements")
+    /*
+	input("MasterSonos", "text", title: "Master Sonos Device", description: "Enter the name of the groups Master Sonos Player")
+    input("SecondSonos", "text", title: "Second Sonos Device", description: "Enter the name of the second Sonos Player")
+    input("ThirdSonos", "text", title: "Third Sonos Device", description: "Enter the name of the third Sonos Player")
+    input("FourthSonos", "text", title: "Fourth Sonos Device", description: "Enter the name of the third Sonos Player")
+    */
 }  
-
  
 metadata {
 	definition (name: "VoxCommando TTS Announcer", namespace: "fuzzysb", author: "Stuart Buchanan") {
-
-		capability "Actuator"
+		capability "Speech Synthesis"
+        capability "Actuator"
 		capability "Refresh"
         command "announce"
 		command "creategroup"
+        command "getgroup"
 		command "dissolveallgroups"
+        command "dissolvegroup"
+        command "nullplay"
 		command "ttsplay"
 		command "selectplayer"
 		command "setvolume"
-		command "test"
-        
-	}
+		command "test"      
+}
 
 
 	// simulator metadata
-	simulator {
+simulator {
 		// status messages
 
 		// reply messages
-	}
+}
 
-	tiles(scale: 2){
-	    standardTile("Test", "device.switch", inactiveLabel: false, width: 2, height: 2, decoration: "flat") {
-			state "default", label:"Test", action:"test", icon:"st.Entertainment.entertainment3"
+tiles(scale: 2){
+    standardTile("Test", "device.switch", inactiveLabel: false, width: 2, height: 2, decoration: "flat") {
+		state "default", label:"Test", action:"test", icon:"st.Entertainment.entertainment3"
 		}
 	
 	
@@ -114,16 +123,16 @@ private def parseHttpResponse(Node data) {
     def events = []
 /*
     if (data.containsKey('state')) {
-        def vlcState = data.state
-        //LOG("VLC state: ${vlcState})")
-        events << createEvent(name:"status", value:vlcState)
-        if (vlcState == 'stopped') {
+        def vcState = data.state
+        //LOG("VLC state: ${vcState})")
+        events << createEvent(name:"status", value:vcState)
+        if (vcState == 'stopped') {
             events << createEvent([name:'trackDescription', value:''])
         }
     }
 
     if (data.containsKey('volume')) {
-        //LOG("VLC volume: ${data.volume})")
+        //LOG("VC volume: ${data.volume})")
         def volume = ((data.volume.toInteger() * 100) / 512) as int
         events << createEvent(name:'level', value:volume)
     }
@@ -138,8 +147,9 @@ private def parseHttpResponse(Node data) {
 
 
 def test() {
+	def defvol = settings.DefaultVolume ?: 70
 	log.debug "Executing Test Message"
-	announce("this is a test message",60)  
+	announce("this is a test message",defvol)  
 }
 
 def announce(message,vol){
@@ -147,38 +157,38 @@ log.debug "Checking DNI"
 updateDNI()
 
 try {
-	def cmds = []
-     /*
+    /* 
     log.debug "Executing dissolvegroup"
 	def dissolveGroupResult = dissolvegroup()
-	cmds << sendHubCommand(dissolveGroupResult)
-   
+	sendHubCommand(dissolveGroupResult)
+    delayHubAction(1000)
+    
 	log.debug "Executing creategroup"
 	def createGroupResult = creategroup()
-	cmds << sendHubCommand(createGroupResult)
+	sendHubCommand(createGroupResult)
+    delayHubAction(1000)
     */
     
 	log.debug "Executing selectplayer"
 	def selectPlayerResult = selectplayer()
-	cmds << sendHubCommand(selectPlayerResult)
+	sendHubCommand(selectPlayerResult)
+    delayHubAction(500)
+    /*
+    log.debug "Executing GetGroupPlayer"
+	def getGroupResult = getgroup()
+	sendHubCommand(getGroupResult)
+    delayHubAction(500)
+	*/
 
-	log.debug "Executing setvolume with: ${vol}"
-	def setVolumeResult = setvolume(vol)
-	cmds << sendHubCommand(setVolumeResult)
-    
     message = URLEncoder.encode(message)
-	log.debug "Executing ttsplay with the message: ${message}"
-	def ttsResult = ttsplay(message)
-	cmds << sendHubCommand(ttsResult)
-   
-    delayBetween(cmds,900)
-    
+	log.debug "Executing ttsplay with the message: ${message} at Volume Level ${vol}"
+	def ttsResult = ttsplay(message, vol)
+    sendHubCommand(ttsResult)
 	}
 	catch (Exception e)
 	{
    		log.debug "Hit Exception $e"
 	}
-
 }
 
 def creategroup(){
@@ -186,32 +196,57 @@ def creategroup(){
 	headers.put("HOST","${settings.ServerIP}:${settings.Port}")
     def result = new physicalgraph.device.HubAction(
         method: "GET",
-        path: "/api/Sonos.CreateGroup&&Conservatory&&Conservatory&&Master%20Bedroom&&Kitchen",
+        path: "/api/Sonos.CreateGroup&&Conservatory&&Master+Bedroom&&Kitchen",
         headers: headers
 	
     )
     return result
 }
 
-def ttsplay(message){
+def getgroup(){
     def headers = [:]
 	headers.put("HOST","${settings.ServerIP}:${settings.Port}")
     def result = new physicalgraph.device.HubAction(
         method: "GET",
-        path: "/api/Sonos.TTS.Speak&&,+${message}",
+        path: "/api/Sonos.GetGroupInfo",
+        headers: headers
+    )
+    return result
+}
+
+def ttsplay(message, vol){
+    def headers = [:]
+	headers.put("HOST","${settings.ServerIP}:${settings.Port}")
+    def result = new physicalgraph.device.HubAction(
+        method: "GET",
+        path: "/api/Sonos.TTS.Speak&&,+${message}&&${vol}",
 		headers: headers
     )
 	//log.debug result
     return result
 }
 
+
+def nullplay(){
+    def headers = [:]
+	headers.put("HOST","${settings.ServerIP}:${settings.Port}")
+    def result = new physicalgraph.device.HubAction(
+        method: "GET",
+        path: "/api/Sonos.TTS.Speak&&,",
+		headers: headers
+    )
+	//log.debug result
+    return result
+}
+
+
 def selectplayer(){
     def headers = [:]
 	headers.put("HOST","${settings.ServerIP}:${settings.Port}")
     def result = new physicalgraph.device.HubAction(
         method: "GET",
-        //path: "/api/Sonos.SetPlayer&&Conservatory",
-        path: "/api/Sonos.SetPlayer&&Conservatory%20%2B%20Master%20Bedroom%20%2B%20Kitchen",
+        //path: "/api/Sonos.SetPlayer&&Conservatory%20%2B%20Master%20Bedroom%20%2B%20Kitchen",
+        path: "/api/Sonos.SetPlayer&&Conservatory",
 		headers: headers
     )
     return result
@@ -226,6 +261,12 @@ def setvolume(vol){
 		headers: headers
     )
     return result
+}
+
+def speak(message){
+	def defvol = settings.DefaultVolume ?: 70
+	log.debug "Executing announcement with: ${message} at Volume: ${defvol}"
+	announce("${message}",defvol)
 }
 
 def dissolvegroup(){
