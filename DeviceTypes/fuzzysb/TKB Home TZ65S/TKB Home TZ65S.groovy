@@ -12,7 +12,7 @@
  *
  */
 metadata {
-	definition (name: "Popp Dimmer 123603", namespace: "fuzzysb", author: "Stuart Buchanan") {
+	definition (name: "TKB Home TZ65S", namespace: "fuzzysb", author: "Stuart Buchanan") {
 		capability "Switch Level"
 		capability "Actuator"
 		capability "Indicator"
@@ -24,7 +24,16 @@ metadata {
 		command		"resetParams2StDefaults"
 		command		"listCurrentParams"
 		
-		fingerprint inClusters: "0x26"
+		 /* Capability notes
+		0x26 COMMAND_CLASS_SWITCH_MULTILEVEL 2
+		0x85 COMMAND_CLASS_ASSOCIATION 2
+		0x70 COMMAND_CLASS_CONFIGURATION 1
+		0x27 COMMAND_CLASS_SWITCH_ALL 1
+		0x86 COMMAND_CLASS_VERSION 2
+		0x72 COMMAND_CLASS_MANUFACTURER_SPECIFIC 2
+        */
+		fingerprint deviceId: "0x1101", inClusters: "0x26 0x85 0x70 0x27 0x86 0x72"
+		
 	}
 
 	simulator {
@@ -57,6 +66,12 @@ metadata {
 				attributeState "level", action:"switch level.setLevel"
 			}
 		}
+		
+		standardTile("indicator", "device.indicatorStatus", width: 2, height: 2, inactiveLabel: false, decoration: "flat") {
+			state "when off", action:"indicator.indicatorWhenOn", icon:"st.indicators.lit-when-off"
+			state "when on", action:"indicator.indicatorNever", icon:"st.indicators.lit-when-on"
+			state "never", action:"indicator.indicatorWhenOff", icon:"st.indicators.never-lit"
+		}
 
 		standardTile("refresh", "device.switch", width: 2, height: 2, inactiveLabel: false, decoration: "flat") {
 			state "default", label:'', action:"refresh.refresh", icon:"st.secondary.refresh"
@@ -67,7 +82,7 @@ metadata {
 		}
 
 		main(["switch"])
-		details(["switch", "level", "refresh"])
+		details(["switch", "level", "indicator", "refresh"])
 
 	}
 }
@@ -76,7 +91,7 @@ def parse(String description) {
 	def result = null
 	if (description != "updated") {
 		log.debug "parse() >> zwave.parse($description)"
-		def cmd = zwave.parse(description, [0x20: 1, 0x26: 1, 0x70: 1])
+		def cmd = zwave.parse(description, [0x20: 1, 0x26: 1, 0x27: 1, 0x70: 1, 0x86: 2, 0x72: 2,])
 		if (cmd) {
 			result = zwaveEvent(cmd)
 		}
@@ -210,23 +225,15 @@ def invertSwitch(invert=true) {
     def resetParams2StDefaults() {
 	log.debug "Resetting Sensor Parameters to SmartThings Compatible Defaults"
 	def cmds = []
-	cmds << zwave.configurationV1.configurationSet(configurationValue: [3], parameterNumber: 1, size: 1).format()
+	cmds << zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 1, size: 1).format()
     cmds << zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 2, size: 1).format()
     cmds << zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 3, size: 1).format()
-    cmds << zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 4, size: 1).format()
-    cmds << zwave.configurationV1.configurationSet(configurationValue: [30], parameterNumber: 5, size: 1).format()
-    cmds << zwave.configurationV1.configurationSet(configurationValue: [3], parameterNumber: 6, size: 1).format()
-    cmds << zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 7, size: 1).format()
-    cmds << zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 8, size: 1).format()
-    cmds << zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 9, size: 1).format()
-    cmds << zwave.configurationV1.configurationSet(configurationValue: [50], parameterNumber: 10, size: 1).format()
-    cmds << zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 17, size: 1).format()
-	cmds << zwave.configurationV1.configurationSet(configurationValue: [99], parameterNumber: 18, size: 1).format()
-	cmds << zwave.configurationV1.configurationSet(configurationValue: [99], parameterNumber: 19, size: 1).format()
-	cmds << zwave.configurationV1.configurationSet(configurationValue: [28], parameterNumber: 51, size: 1).format()
-	cmds << zwave.configurationV1.configurationSet(configurationValue: [28], parameterNumber: 52, size: 1).format()
-	cmds << zwave.configurationV1.configurationSet(configurationValue: [10], parameterNumber: 53, size: 1).format()
-	cmds << zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 54, size: 1).format()
+    cmds << zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 4, size: 1).format()
+    cmds << zwave.configurationV1.configurationSet(configurationValue: [2], parameterNumber: 20, size: 1).format()
+    cmds << zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 22, size: 1).format()
+    cmds << zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 14, size: 1).format()
+    cmds << zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: 15, size: 1).format()
+    cmds << zwave.configurationV1.configurationSet(configurationValue: [2], parameterNumber: 19, size: 1).format()
     
     delayBetween(cmds, 500)
 	}
@@ -238,20 +245,11 @@ def listCurrentParams() {
     cmds << zwave.configurationV1.configurationGet(parameterNumber: 2).format()
     cmds << zwave.configurationV1.configurationGet(parameterNumber: 3).format()
     cmds << zwave.configurationV1.configurationGet(parameterNumber: 4).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 5).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 6).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 7).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 8).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 9).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 10).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 17).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 18).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 19).format()
     cmds << zwave.configurationV1.configurationGet(parameterNumber: 20).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 51).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 52).format()
-    cmds << zwave.configurationV1.configurationGet(parameterNumber: 53).format()
-	cmds << zwave.configurationV1.configurationGet(parameterNumber: 54).format()     
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 22).format()
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 14).format()
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 15).format()
+    cmds << zwave.configurationV1.configurationGet(parameterNumber: 19).format()
 	
 	delayBetween(cmds, 500)
 }
