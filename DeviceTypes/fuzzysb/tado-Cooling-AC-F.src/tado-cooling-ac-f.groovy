@@ -379,7 +379,7 @@ private sendCommand(method, args = []) {
             httpGet(request)
         }
     } catch(Exception e){
-        debug("___exception: " + e)
+        log.debug("___exception: " + e)
     }
 }
 

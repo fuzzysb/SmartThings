@@ -332,7 +332,6 @@ def coolingSetpointDown(){
 	setHeatingSetpoint(newSetpoint)
 }
 
-
 private sendCommand(method, args = []) {
     def methods = [
 		'status': [
@@ -390,7 +389,7 @@ private sendCommand(method, args = []) {
             httpGet(request)
         }
     } catch(Exception e){
-        debug("___exception: " + e)
+        log.debug("___exception: " + e)
     }
 }
 
