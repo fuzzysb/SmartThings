@@ -13,6 +13,7 @@
  *	Tado Thermostat
  *
  *	Author: Stuart Buchanan, Based on original work by Ian M with thanks
+ *	Date: 2016-04-05 v1.8 Added all thermostat related capabilities
  *  Date: 2016-04-05 v1.7 Amended device to be capable of both Fahrenheit and celsius and amended the Device multiattribute tile
  *  Date: 2016-04-05 v1.6 switched API calls to new v2 calls as the old ones had been deprecated.
  *  Date: 2016-02-21 v1.5 switched around thermostatOperatingState & thermostatMode to get better compatibility with Home Remote
@@ -36,6 +37,12 @@ metadata {
 	definition (name: "Tado AC Thermostat", namespace: "fuzzysb", author: "Stuart Buchanan") {
 		capability "Actuator"
         capability "Temperature Measurement"
+		capability "Thermostat Cooling Setpoint"
+		capability "Thermostat Heating Setpoint"
+		capability "Thermostat Mode"
+		capability "Thermostat Fan Mode"
+		capability "Thermostat Setpoint"
+		capability "Thermostat Operating State"
 		capability "Thermostat"
 		capability "Relative Humidity Measurement"
 		capability "Polling"
