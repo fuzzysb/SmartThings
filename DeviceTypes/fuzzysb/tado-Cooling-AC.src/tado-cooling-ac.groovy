@@ -13,6 +13,8 @@
  *	Tado Thermostat
  *
  *	Author: Stuart Buchanan, Based on original work by Ian M with thanks
+ *  Date: 2016-04-05 v1.7 Amended device to be capable of both Fahrenheit and celsius and amended the Device multiattribute tile
+ *  Date: 2016-04-05 v1.6 switched API calls to new v2 calls as the old ones had been deprecated.
  *  Date: 2016-02-21 v1.5 switched around thermostatOperatingState & thermostatMode to get better compatibility with Home Remote
  *  Date: 2016-02-21 v1.4 added HeatingSetPoint & CoolingSetPoint to make compatible with SmartTiles
  *  Date: 2016-02-21 v1.3 amended the read thermostat properties to match the ST Thermostat Capability
@@ -27,6 +29,7 @@ import groovy.json.JsonOutput
 preferences {
 	input("username", "text", title: "Username", description: "Your Tado username")
 	input("password", "password", title: "Password", description: "Your Tado password")
+    //input("tempunit", "enum", title: "Temperature Unit to Use (Celcius or Fahrenheit)?", options: ["C","F"], required: false, defaultValue: "C")
 }  
  
 metadata {
@@ -34,8 +37,7 @@ metadata {
 		capability "Actuator"
         capability "Temperature Measurement"
 		capability "Thermostat"
-		capability "Presence Sensor"
-        capability "Relative Humidity Measurement"
+		capability "Relative Humidity Measurement"
 		capability "Polling"
 		capability "Refresh"
         
@@ -58,19 +60,26 @@ metadata {
 	tiles(scale: 2){
       	multiAttributeTile(name: "thermostat", type:"thermostat", width:6, height:4) {
 			tileAttribute("device.temperature", key:"PRIMARY_CONTROL", canChangeIcon: true, canChangeBackground: true){
-            	attributeState "default", label:'${currentValue}° C', unit:"C", backgroundColor:"#fab907", icon:"st.Home.home1"
+            	attributeState "default", label:'${currentValue}°', backgroundColor:"#fab907", icon:"st.Home.home1"
             }
-			tileAttribute ("device.Humidity", key: "SECONDARY_CONTROL") {
-				attributeState "default", label: '${currentValue}% Humidity', icon:"st.Weather.weather12"
-			}
-		}
+			tileAttribute("device.humidity", key: "SECONDARY_CONTROL") {
+    			attributeState("default", label:'${currentValue}%', unit:"%")
+  				}
+            tileAttribute("device.thermostatOperatingState", key: "OPERATING_STATE") {
+    			attributeState("SLEEP", backgroundColor:"#0164a8")
+    			attributeState("HOME", backgroundColor:"#fab907")
+    			attributeState("AWAY", backgroundColor:"#62aa12")
+                attributeState("OFF", backgroundColor:"#c0c0c0")
+                attributeState("MANUAL", backgroundColor:"#804000")
+  }
+ 		}
         
         standardTile("thermostatOperatingState", "device.thermostatOperatingState", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true) {         
 			state("SLEEP", label:'${name}', backgroundColor:"#0164a8", icon:"st.Bedroom.bedroom2")
             state("HOME", label:'${name}', backgroundColor:"#fab907", icon:"st.Home.home2")
             state("AWAY", label:'${name}', backgroundColor:"#62aa12", icon:"st.Outdoor.outdoor18")
             state("OFF", label:'${name}', backgroundColor:"#ffffff", icon:"st.switches.switch.off", defaultState: true)
-            state("MANUAL", label:'${name}', backgroundColor:"#ffffff", icon:"st.Weather.weather1")
+            state("MANUAL", label:'${name}', backgroundColor:"#804000", icon:"st.Weather.weather1")
 		}
     	
         standardTile("refresh", "device.switch", inactiveLabel: false, width: 2, height: 1, decoration: "flat") {
@@ -87,19 +96,19 @@ metadata {
 		}
         
 		valueTile("thermostatSetpoint", "device.thermostatSetpoint", width: 2, height: 1, decoration: "flat") {
-			state "default", label: 'Set Point\r\n\${currentValue}° C'
+			state "default", label: 'Set Point\r\n\${currentValue}°'
 		}
         
         valueTile("heatingSetpoint", "device.heatingSetpoint", width: 2, height: 1, decoration: "flat") {
-			state "default", label: 'Set Point\r\n\${currentValue}° C'
+			state "default", label: 'Set Point\r\n\${currentValue}°'
 		}
         
         valueTile("coolingSetpoint", "device.coolingSetpoint", width: 2, height: 1, decoration: "flat") {
-			state "default", label: 'Set Point\r\n\${currentValue}° C'
+			state "default", label: 'Set Point\r\n\${currentValue}°'
 		}
 		
 		valueTile("outsidetemperature", "device.outsidetemperature", width: 2, height: 1, decoration: "flat") {
-			state "outsidetemperature", label: 'Outside Temp\r\n${currentValue}° C'
+			state "outsidetemperature", label: 'Outside Temp\r\n${currentValue}°'
 		}
        
 		standardTile("thermostatFanMode", "device.thermostatFanMode", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true) {
@@ -121,6 +130,18 @@ metadata {
         standardTile("setOff", "device.thermostat", width: 2, height: 1, decoration: "flat") {
 			state "default", label:"Off", action:"thermostat.off"
 		}
+        standardTile("cool", "device.thermostat", width: 2, height: 1, decoration: "flat") {
+			state "default", label:"Cool", action:"thermostat.cool", backgroundColor:"#0683ff"
+		}
+        standardTile("heat", "device.thermostat", width: 2, height: 1, decoration: "flat") {
+			state "default", label:"Heat", action:"thermostat.heat", backgroundColor:"#bc2323"
+		}
+        standardTile("emergencyHeat", "device.thermostat", width: 2, height: 2, decoration: "flat") {
+			state "default", label:"EMERGENCY\r\nHEAT", action:"thermostat.emergencyHeat", backgroundColor:"#bc2323"
+		}
+        standardTile("fan", "device.thermostat", width: 2, height: 1, decoration: "flat") {
+			state "default", label:"Fan", action:"thermostat.fanAuto"
+		}
         standardTile("coolingSetpointUp", "device.coolingSetpoint", canChangeIcon: false, decoration: "flat") {
             state "coolingSetpointUp", label:'  ', action:"coolingSetpointUp", icon:"st.thermostat.thermostat-up", backgroundColor:"#0683ff"
         }
@@ -135,36 +156,18 @@ metadata {
         }
 		
 		main(["thermostat"])
-		details(["thermostat","thermostatMode","coolingSetpointUp","coolingSetpointDown","autoOperation","heatingSetpointUp","heatingSetpointDown","outsidetemperature","thermostatSetpoint","thermostatFanMode","refresh","setAuto","setDry","setOn","setOff"])
+		details(["thermostat","thermostatMode","coolingSetpointUp","coolingSetpointDown","autoOperation","heatingSetpointUp","heatingSetpointDown","outsidetemperature","thermostatSetpoint","thermostatOperatingState","refresh","thermostatFanMode","setAuto","setOn","setOff","fan","cool","heat","setDry"])
 	}
 }
 
 // Parse incoming device messages to generate events
-private parseResponse(resp) {
-    log.debug("Executing parseResponse: "+resp.data)
+private parseMeResponse(resp) {
+    log.debug("Executing parseMeResponse: "+resp.data)
     log.debug("Output status: "+resp.status)
-	def temperatureUnit = "C"
-	def humidityUnit = "%"
     if(resp.status == 200) {
-    	log.debug("Executing parseResponse.successTrue")
-        
-        def temperature = Math.round(resp.data.insideTemp)
-        log.debug("Read temperature: " + temperature)
-        sendEvent(name: 'temperature', value: temperature, unit: temperatureUnit)
-        log.debug("Send Temperature Event Fired")
-		
-		state.homeId = resp.data.homeId
+    	log.debug("Executing parseMeResponse.successTrue")
+        state.homeId = resp.data.homes[0].id
         log.debug("Got HomeID Value: " + state.homeId)
-
-        def autoOperation = resp.data.autoOperation
-        if(resp.data.operation == "NO_FREEZE"){
-        	autoOperation = "OFF"
-        }else if(resp.data.operation == "MANUAL"){
-        	autoOperation = "MANUAL"
-        }
-        log.debug("Read thermostatOperatingState: " + autoOperation)
-        sendEvent(name: 'thermostatOperatingState', value: autoOperation)
-        log.debug("Send thermostatMode Event Fired")
         
     }else if(resp.status == 201){
         log.debug("Something was created/updated")
@@ -172,55 +175,83 @@ private parseResponse(resp) {
 }
 
 private parseputResponse(resp) {
-	log.debug("Executing parseHvacResponse: "+resp.data)
+	log.debug("Executing parseputResponse: "+resp.data)
     log.debug("Output status: "+resp.status)
 }
 
-private parseHvacResponse(resp) {    
-    log.debug("Executing parseHvacResponse: "+resp.data)
+private parseResponse(resp) {    
+    log.debug("Executing parseResponse: "+resp.data)
     log.debug("Output status: "+resp.status)
-	def temperatureUnit = "C"
+	def temperatureUnit = state.tempunit
+    log.debug("Temperature Unit is ${temperatureUnit}")
 	def humidityUnit = "%"
+    def ACMode
+    def ACFanSpeed
+    def thermostatSetpoint
     if(resp.status == 200) {
-    	log.debug("Executing parseHvacResponse.successTrue")
-        
+        log.debug("Executing parseResponse.successTrue")
+        def temperature
+        if (temperatureUnit == "C") {
+        	temperature = (Math.round(resp.data.sensorDataPoints.insideTemperature.celsius *10 ) / 10)
+        }
+        else if(temperatureUnit == "F"){
+        	temperature = (Math.round(resp.data.sensorDataPoints.insideTemperature.fahrenheit * 10) / 10)
+        }
+        log.debug("Read temperature: " + temperature)
+        sendEvent(name: 'temperature', value: temperature, unit: temperatureUnit)
+        log.debug("Send Temperature Event Fired")
+        def autoOperation = "OFF"
+        if(resp.data.overlayType == null){
+        	autoOperation = resp.data.tadoMode
+        }
+        else if(resp.data.overlayType == "NO_FREEZE"){
+        	autoOperation = "OFF"
+        }else if(resp.data.overlayType == "MANUAL"){
+        	autoOperation = "MANUAL"
+        }
+        log.debug("Read thermostatOperatingState: " + autoOperation)
+        sendEvent(name: 'thermostatOperatingState', value: autoOperation)
+        log.debug("Send thermostatMode Event Fired")
+
         def humidity 
-        if (resp.data.humidity.percentage != null){
-        	humidity = resp.data.humidity.percentage
+        if (resp.data.sensorDataPoints.humidity.percentage != null){
+        	humidity = resp.data.sensorDataPoints.humidity.percentage
         }else{
         	humidity = "--"
         }
         log.debug("Read humidity: " + humidity)
 			       
         sendEvent(name: 'humidity', value: humidity,unit: humidityUnit)
-	}	
-	def ACMode
-    def ACFanSpeed
-    def thermostatSetpoint
-    if (resp.data.acSetting.power == "OFF"){
-       	ACMode = "OFF"
-        log.debug("Read thermostatMode: " + ACMode)
-		ACFanSpeed = "OFF"
-        log.debug("Read thermostatFanMode: " + ACFanSpeed)
-		thermostatSetpoint = "0"
-        log.debug("Read thermostatSetpoint: " + thermostatSetpoint)
-    }
-    else if (resp.data.acSetting.power == "ON"){
-       	ACMode = resp.data.acSetting.mode
-		log.debug("thermostatMode: " + ACMode)
-		ACFanSpeed = resp.data.acSetting.fanSpeed
-        log.debug("Read thermostatFanMode: " + ACFanSpeed)
-        if (ACMode == "DRY"){
+
+    	if (resp.data.setting.power == "OFF"){
+       		ACMode = "OFF"
+        	log.debug("Read thermostatMode: " + ACMode)
+			ACFanSpeed = "OFF"
+        	log.debug("Read thermostatFanMode: " + ACFanSpeed)
+			thermostatSetpoint = "0"
+        	log.debug("Read thermostatSetpoint: " + thermostatSetpoint)
+    	}
+   	 	else if (resp.data.setting.power == "ON"){
+       		ACMode = resp.data.setting.mode
+			log.debug("thermostatMode: " + ACMode)
+			ACFanSpeed = resp.data.setting.fanSpeed
+        	log.debug("Read thermostatFanMode: " + ACFanSpeed)
+        if (ACMode == "DRY" || ACMode == "AUTO" || ACMode == "FAN"){
         	thermostatSetpoint = "--"
-        }else if (ACMode == "AUTO"){
-                	thermostatSetpoint = "--"
         }else{
-        	thermostatSetpoint = Math.round(resp.data.acSetting.temperature.celsius)
+       		if (temperatureUnit == "C") {
+        		thermostatSetpoint = Math.round(resp.data.setting.temperature.celsius)
+        	}
+        	else if(temperatureUnit == "F"){
+        		thermostatSetpoint = Math.round(resp.data.setting.temperature.fahrenheit)
+        	}
         }
         log.debug("Read thermostatSetpoint: " + thermostatSetpoint)
-    }
+    	}
+	}	
+
 	else{
-        log.debug("Executing parseHvacResponse.successFalse")
+        log.debug("Executing parseResponse.successFalse")
     }
     sendEvent(name: 'thermostatFanMode', value: ACFanSpeed)
     log.debug("Send thermostatFanMode Event Fired")
@@ -236,14 +267,136 @@ private parseHvacResponse(resp) {
 
 }
 
+private parseTempResponse(resp) {
+    log.debug("Executing parseTempResponse: "+resp.data)
+    log.debug("Output status: "+resp.status)
+    if(resp.status == 200) {
+    	log.debug("Executing parseTempResponse.successTrue")
+        def tempunitname = resp.data.temperatureUnit
+        if (tempunitname == "CELSIUS") {
+        	log.debug("Setting Temp Unit to C")
+        	state.tempunit = "C"
+        }
+        else if(tempunitname == "FAHRENHEIT"){
+        	log.debug("Setting Temp Unit to F")
+        	state.tempunit = "F"
+        }       
+    }else if(resp.status == 201){
+        log.debug("Something was created/updated")
+    }
+}
+
+
+
+private parseCapabilitiesResponse(resp) {
+    log.debug("Executing parseCapabilitiesResponse: "+resp.data)
+    log.debug("Output status: " + resp.status)
+    if(resp.status == 200) {
+    	try{
+    	log.debug("Executing parseResponse.successTrue")
+       	state.tadoType = resp.data.type
+        log.debug("Tado Type is ${state.tadoType}")
+        if(resp.data.AUTO || (resp.data.AUTO).toString() == "[:]"){
+        	log.debug("settingautocapability state true")
+        	state.supportsAuto = "true"
+        } else {
+        	log.debug("settingautocapability state false")
+        	state.supportsAuto = "false"
+        }
+        if(resp.data.COOL || (resp.data.COOL).toString() == "[:]"){
+        	log.debug("setting COOL capability state true")
+        	state.supportsCool = "true"
+            def coolfanmodelist = resp.data.COOL.fanSpeeds
+            if(coolfanmodelist.find { it == 'AUTO' }){
+            	log.debug("setting COOL Auto Fan Speed capability state true")
+            	state.SupportsCoolAutoFanSpeed = "true"
+            } else {
+            	log.debug("setting COOL Auto Fan Speed capability state false")
+            	state.SupportsCoolAutoFanSpeed = "false"
+            }
+            if (state.tempunit == "C"){
+            	state.MaxCoolTemp = resp.data.COOL.temperatures.celsius.max
+                log.debug("set state.MaxCoolTemp to : " + state.MaxCoolTemp + "C")
+                state.MinCoolTemp = resp.data.COOL.temperatures.celsius.min
+                log.debug("set state.MinCoolTemp to : " + state.MinCoolTemp + "C")
+            } else if (state.tempunit == "F") {
+            	state.MaxCoolTemp = resp.data.COOL.temperatures.fahrenheit.max
+                log.debug("set state.MaxCoolTemp to : " + state.MaxCoolTemp + "F")
+                state.MinCoolTemp = resp.data.COOL.temperatures.fahrenheit.min
+                log.debug("set state.MinCoolTemp to : " + state.MinCoolTemp + "F")
+           	}    
+        } else {
+        	log.debug("setting COOL capability state false")
+        	state.supportsCool = "false"
+        }
+        if(resp.data.DRY || (resp.data.DRY).toString() == "[:]"){
+        	log.debug("setting DRY capability state true")
+        	state.supportsDry = "true"
+        } else {
+        	log.debug("setting DRY capability state false")
+        	state.supportsDry = "false"
+        }
+        if(resp.data.FAN || (resp.data.FAN).toString() == "[:]"){
+        	log.debug("setting FAN capability state true")
+        	state.supportsFan = "true"
+        } else {
+        	log.debug("setting FAN capability state false")
+        	state.supportsFan = "false"
+        }
+        if(resp.data.HEAT || (resp.data.HEAT).toString() == "[:]"){
+        	log.debug("setting HEAT capability state true")
+        	state.supportsHeat = "true"
+            def heatfanmodelist = resp.data.HEAT.fanSpeeds
+            if(heatfanmodelist.find { it == 'AUTO' }){
+            	log.debug("setting HEAT Auto Fan Speed capability state true")
+            	state.SupportsHeatAutoFanSpeed = "true"
+            } else {
+            	log.debug("setting HEAT Auto Fan Speed capability state false")
+            	state.SupportsHeatAutoFanSpeed = "false"
+            }
+            if (state.tempunit == "C"){
+            	state.MaxHeatTemp = resp.data.HEAT.temperatures.celsius.max
+                log.debug("set state.MaxHeatTemp to : " + state.MaxHeatTemp + "C")
+                state.MinHeatTemp = resp.data.HEAT.temperatures.celsius.min
+                log.debug("set state.MinHeatTemp to : " + state.MinHeatTemp + "C")
+            } else if (state.tempunit == "F") {
+            	state.MaxHeatTemp = resp.data.HEAT.temperatures.fahrenheit.max
+                log.debug("set state.MaxHeatTemp to : " + state.MaxHeatTemp + "F")
+                state.MinHeatTemp = resp.data.HEAT.temperatures.fahrenheit.min
+                log.debug("set state.MinHeatTemp to : " + state.MinHeatTemp + "F")
+           	}    
+        } else {
+        	log.debug("setting HEAT capability state false")
+        	state.supportsHeat = "false"
+        }
+        log.debug("state.supportsDry = ${state.supportsDry}")
+        log.debug("state.supportsCool = ${state.supportsCool}")
+        log.debug("state.supportsFan = ${state.supportsFan}")
+        log.debug("state.supportsAuto = ${state.supportsAuto}")
+        log.debug("state.supportsHeat = ${state.supportsHeat}")
+    }catch(Exception e){
+        log.debug("___exception: " + e)
+    }   
+    }else if(resp.status == 201){
+        log.debug("Something was created/updated")
+    }
+}
+
+
 private parseweatherResponse(resp) {
     log.debug("Executing parseweatherResponse: "+resp.data)
     log.debug("Output status: "+resp.status)
-	def temperatureUnit = "C"
+	def temperatureUnit = state.tempunit
+    log.debug("Temperature Unit is ${temperatureUnit}")
     if(resp.status == 200) {
     	log.debug("Executing parseResponse.successTrue")
-        
-        def outsidetemperature = Math.round(resp.data.outsideTemperature.celsius)
+        def outsidetemperature
+        if (temperatureUnit == "C") {
+        	outsidetemperature = resp.data.outsideTemperature.celsius
+        }
+        else if(temperatureUnit == "F"){
+        	outsidetemperature = resp.data.outsideTemperature.fahrenheit
+        }
         log.debug("Read outside temperature: " + outsidetemperature)
         sendEvent(name: 'outsidetemperature', value: outsidetemperature , unit: temperatureUnit)
         log.debug("Send Outside Temperature Event Fired")
@@ -251,6 +404,25 @@ private parseweatherResponse(resp) {
     }else if(resp.status == 201){
         log.debug("Something was created/updated")
     }
+}
+
+def updated(){
+def cmds = [
+getidCommand(),
+getTempUnitCommand(),
+getCapabilitiesCommand()
+]
+delayBetween(cmds, 2000)
+}
+
+def installed(){
+def cmds = [
+getidCommand(),
+getTempUnitCommand(),
+getCapabilitiesCommand(),
+refresh()
+]
+delayBetween(cmds, 2000)
 }
 
 def poll() {
@@ -261,7 +433,6 @@ def poll() {
 def refresh() {
 	log.debug "Executing 'refresh'"
     statusCommand()
-    hvacStatusCommand()
     weatherStatusCommand()
     
 }
@@ -290,6 +461,26 @@ def dry() {
     refresh()
 }
 
+def setThermostatMode(requiredMode){
+	switch (requiredMode) {
+    	case "DRY":
+        	dry()
+        break
+    	case "HEAT":
+        	heat()
+        break
+        case "COOL":
+        	cool()
+        break
+        case "AUTO":
+        	auto()
+        break
+        case "FAN":
+        	fanAuto()
+        break
+     }
+}
+
 def setHeatingSetpoint(targetTemperature) {
 	log.debug "Executing 'setHeatingSetpoint'"
     log.debug "Target Temperature ${targetTemperature}"
@@ -299,16 +490,24 @@ def setHeatingSetpoint(targetTemperature) {
 
 def heatingSetpointUp(){
 	log.debug "Current SetPoint Is " + (device.currentValue("thermostatSetpoint")).toString()
-	int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() + 1
-	log.debug "Setting heatingSetpoint up to: ${newSetpoint}"
-	setHeatingSetpoint(newSetpoint)
+    if ((device.currentValue("thermostatSetpoint").toInteger() - 1 ) < state.MinHeatTemp){
+    	log.debug("cannot decrease heat setpoint, its already at the minimum level of " + state.MinHeatTemp)
+    } else {
+		int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() + 1
+		log.debug "Setting heatingSetpoint up to: ${newSetpoint}"
+		setHeatingSetpoint(newSetpoint)
+    }
 }
 
 def heatingSetpointDown(){
 	log.debug "Current SetPoint Is " + (device.currentValue("thermostatSetpoint")).toString()
-	int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() - 1
-	log.debug "Setting heatingSetpoint down to: ${newSetpoint}"
-	setHeatingSetpoint(newSetpoint)
+    if ((device.currentValue("thermostatSetpoint").toInteger() + 1 ) > state.MaxHeatTemp){
+    	log.debug("cannot increase heat setpoint, its already at the maximum level of " + state.MaxHeatTemp)
+    } else {
+		int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() - 1
+		log.debug "Setting heatingSetpoint down to: ${newSetpoint}"
+		setHeatingSetpoint(newSetpoint)
+    }
 }
 
 def setCoolingSetpoint(targetTemperature) {
@@ -320,29 +519,49 @@ def setCoolingSetpoint(targetTemperature) {
 
 def coolingSetpointUp(){
 	log.debug "Current SetPoint Is " + (device.currentValue("thermostatSetpoint")).toString()
-	int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() + 1
-	log.debug "Setting coolingSetpoint up to: ${newSetpoint}"
-	setHeatingSetpoint(newSetpoint)
+    if ((device.currentValue("thermostatSetpoint").toInteger() + 1 ) > state.MaxCoolTemp){
+    	log.debug("cannot increase cool setpoint, its already at the maximum level of " + state.MaxCoolTemp)
+    } else {
+		int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() + 1
+		log.debug "Setting coolingSetpoint up to: ${newSetpoint}"
+		setCoolingSetpoint(newSetpoint)
+    }
 }
 
 def coolingSetpointDown(){
 	log.debug "Current SetPoint Is " + (device.currentValue("thermostatSetpoint")).toString()
-	int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() - 1
-	log.debug "Setting coolingSetpoint down to: ${newSetpoint}"
-	setHeatingSetpoint(newSetpoint)
+    if ((device.currentValue("thermostatSetpoint").toInteger() - 1 ) < state.MinCoolTemp){
+    	log.debug("cannot decrease cool setpoint, its already at the minimum level of " + state.MinCoolTemp)
+    } else {
+		int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() - 1
+		log.debug "Setting coolingSetpoint down to: ${newSetpoint}"
+		setCoolingSetpoint(newSetpoint)
+    }
 }
 
 private sendCommand(method, args = []) {
     def methods = [
-		'status': [
+		'getid': [
         			uri: "https://my.tado.com", 
-                    path: "/mobile/1.6/getCurrentState", 
+                    path: "/api/v2/me", 
                     requestContentType: "application/json", 
                     query: [username:settings.username, password:settings.password]
                     ],
-        'hvacStatus': [
+        'gettempunit': [
         			uri: "https://my.tado.com", 
-                    path: "/api/v1/home/" + state.homeId + "/hvacState", 
+                    path: "/api/v2/homes/${state.homeId}", 
+                    requestContentType: "application/json", 
+                    query: [username:settings.username, password:settings.password]
+                    ],
+        'getcapabilities': [
+        			uri: "https://my.tado.com", 
+                    path: "/api/v2/homes/" + state.homeId + "/zones/1/capabilities", 
+                    requestContentType: "application/json", 
+                    query: [username:settings.username, password:settings.password]
+                    ],
+        'status': [
+        			uri: "https://my.tado.com", 
+                    path: "/api/v2/homes/" + state.homeId + "/zones/1/state", 
                     requestContentType: "application/json", 
                     query: [username:settings.username, password:settings.password]
                     ],
@@ -355,7 +574,7 @@ private sendCommand(method, args = []) {
                    	],
 		'weatherStatus': [	
         			uri: "https://my.tado.com",
-        			path: "/api/v1/home/" + state.homeId + "/weather",
+        			path: "/api/v2/homes/" + state.homeId + "/weather",
         			requestContentType: "application/json",
     				query: [username:settings.username, password:settings.password]
                    	]
@@ -368,13 +587,21 @@ private sendCommand(method, args = []) {
     try{
         log.debug "Executing 'sendCommand'"
         
-        if (method == "status"){
+        if (method == "getid"){
+            httpGet(request) { resp ->            
+                parseMeResponse(resp)
+            }
+        }else if (method == "gettempunit"){
+            httpGet(request) { resp ->            
+                parseTempResponse(resp)
+            }
+       	}else if (method == "getcapabilities"){
+            httpGet(request) { resp ->            
+                parseCapabilitiesResponse(resp)
+            }
+        }else if (method == "status"){
             httpGet(request) { resp ->            
                 parseResponse(resp)
-            }
-        }else if (method == "hvacStatus"){
-            httpGet(request) { resp ->            
-                parseHvacResponse(resp)
             }
 		}else if (method == "temperature"){
             httpPut(request) { resp ->            
@@ -396,9 +623,19 @@ private sendCommand(method, args = []) {
 
 
 // Commands to device
-def statusCommand(){
-	log.debug "Executing 'sendCommand.statusCommand'"
-	sendCommand("status",[])
+def getidCommand(){
+	log.debug "Executing 'sendCommand.getidCommand'"
+	sendCommand("getid",[])
+}
+
+def getCapabilitiesCommand(){
+	log.debug "Executing 'sendCommand.getcapabilities'"
+	sendCommand("getcapabilities",[])
+}
+
+def getTempUnitCommand(){
+	log.debug "Executing 'sendCommand.getidCommand'"
+	sendCommand("gettempunit",[])
 }
 
 def autoCommand(){
@@ -413,15 +650,62 @@ def dryCommand(){
 	sendCommand("temperature",[jsonbody])
 }
 
+def fanAuto(){
+	log.debug "Executing 'sendCommand.fanAutoCommand'"
+    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[mode:"FAN", power:"ON", type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
+	sendCommand("temperature",[jsonbody])
+}
+
+def fanOn(){
+	fanAuto()
+}
+
+def fanCirculate(){
+	fanAuto()
+}
+
+def cool(){
+	coolCommand()
+}
+
+def heat(){
+	heatCommand()
+}
+
+
 def setCoolingTempCommand(targetTemperature){
+    def supportedfanspeed
+    def jsonbody
+    if (state.SupportsCoolAutoFanSpeed == "true"){
+    	supportedfanspeed = "AUTO"
+    } else {
+        supportedfanspeed = "HIGH"
+    }  
+ 	if (state.tempunit == "C") {
+        	jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"COOL", power:"ON", temperature:[celsius:targetTemperature], type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
+        }
+        else if(state.tempunit == "F"){
+            jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"COOL", power:"ON", temperature:[fahrenheit:targetTemperature], type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
+        }
 	log.debug "Executing 'sendCommand.setCoolingTempCommand' to ${targetTemperature}"
-    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:"HIGH", mode:"COOL", power:"ON", temperature:[celsius:targetTemperature], type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
 	sendCommand("temperature",[jsonbody])
 }
 
 def setHeatingTempCommand(targetTemperature){
+    def supportedfanspeed
+    def jsonbody
+    if (state.SupportsHeatAutoFanSpeed == "true"){
+    	supportedfanspeed = "AUTO"
+        } else {
+        supportedfanspeed = "HIGH"
+        }  
+ 	if (state.tempunit == "C") {
+        	jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"HEAT", power:"ON", temperature:[celsius:targetTemperature], type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
+        }
+        else if(state.tempunit == "F"){
+        	jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"HEAT", power:"ON", temperature:[fahrenheit:targetTemperature], type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
+        }
 	log.debug "Executing 'sendCommand.setHeatingTempCommand' to ${targetTemperature}"
-    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:"AUTO", mode:"HEAT", power:"ON", temperature:[celsius:targetTemperature], type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
 	sendCommand("temperature",[jsonbody])
 }
 
@@ -437,9 +721,63 @@ def onCommand(){
 	sendCommand("temperature",[jsonbody])
 }
 
-def hvacStatusCommand(){
-	log.debug "Executing 'sendCommand.hvacStatusCommand'"
-	sendCommand("hvacStatus",[])
+def coolCommand(){
+	log.debug "Executing 'sendCommand.coolCommand'"
+    def initialsetpointtemp
+    def supportedfanspeed
+    if (state.SupportsCoolAutoFanSpeed == "true"){
+    	supportedfanspeed = "AUTO"
+        } else {
+        supportedfanspeed = "HIGH"
+        }  
+    if(device.currentValue("thermostatSetpoint") == 0){
+    	initialsetpointtemp = 21
+    } else {
+    	initialsetpointtemp = device.currentValue("thermostatSetpoint")
+    }
+    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"HEAT", power:"ON", temperature:[celsius:initialsetpointtemp], type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
+	sendCommand("temperature",[jsonbody])
+}
+
+def heatCommand(){
+	log.debug "Executing 'sendCommand.heatCommand'"
+    def initialsetpointtemp
+    def supportedfanspeed
+    if (state.SupportsHeatAutoFanSpeed == "true"){
+    	supportedfanspeed = "AUTO"
+        } else {
+        supportedfanspeed = "HIGH"
+        }  
+    if(device.currentValue("thermostatSetpoint") == 0){
+    	initialsetpointtemp = 21
+    } else {
+    	initialsetpointtemp = device.currentValue("thermostatSetpoint")
+    }
+    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"HEAT", power:"ON", temperature:[celsius:initialsetpointtemp], type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
+	sendCommand("temperature",[jsonbody])
+}
+
+def emergencyHeat(){
+	log.debug "Executing 'sendCommand.heatCommand'"
+    def initialsetpointtemp
+    def supportedfanspeed
+    if (state.SupportsHeatAutoFanSpeed == "true"){
+    	supportedfanspeed = "AUTO"
+        } else {
+        supportedfanspeed = "HIGH"
+        }  
+    if(device.currentValue("thermostatSetpoint") == 0){
+    	initialsetpointtemp = 23
+    } else {
+    	initialsetpointtemp = device.currentValue("thermostatSetpoint")
+    }
+    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"HEAT", power:"ON", temperature:[celsius:initialsetpointtemp], type:"AIR_CONDITIONING"], termination:[durationInSeconds:"3600", type:"TIMER"]])
+	sendCommand("temperature",[jsonbody])
+}
+
+def statusCommand(){
+	log.debug "Executing 'sendCommand.statusCommand'"
+	sendCommand("status",[])
 }
 
 def weatherStatusCommand(){
