@@ -13,6 +13,7 @@
  *	Tado Thermostat
  *
  *	Author: Stuart Buchanan, Based on original work by Ian M with thanks
+  *	Date: 2016-04-05 v1.9 Amended Device Handler Name
  *	Date: 2016-04-05 v1.8 Added all thermostat related capabilities
  *  Date: 2016-04-05 v1.7 Amended device to be capable of both Fahrenheit and celsius and amended the Device multiattribute tile
  *  Date: 2016-04-05 v1.6 switched API calls to new v2 calls as the old ones had been deprecated.
@@ -34,7 +35,7 @@ preferences {
 }  
  
 metadata {
-	definition (name: "Tado AC Thermostat", namespace: "fuzzysb", author: "Stuart Buchanan") {
+	definition (name: "Tado Cooling Thermostat", namespace: "fuzzysb", author: "Stuart Buchanan") {
 		capability "Actuator"
         capability "Temperature Measurement"
 		capability "Thermostat Cooling Setpoint"
