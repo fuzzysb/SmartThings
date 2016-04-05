@@ -13,7 +13,8 @@
  *	Tado Thermostat
  *
  *	Author: Stuart Buchanan, Based on original work by Ian M with thanks
-  *	Date: 2016-04-05 v1.9 Amended Device Handler Name
+ *	Date: 2016-04-05 v2.0 Further Changes to MultiAttribute Tile
+ *	Date: 2016-04-05 v1.9 Amended Device Handler Name
  *	Date: 2016-04-05 v1.8 Added all thermostat related capabilities
  *  Date: 2016-04-05 v1.7 Amended device to be capable of both Fahrenheit and celsius and amended the Device multiattribute tile
  *  Date: 2016-04-05 v1.6 switched API calls to new v2 calls as the old ones had been deprecated.
@@ -72,15 +73,15 @@ metadata {
             }
 			tileAttribute("device.humidity", key: "SECONDARY_CONTROL") {
     			attributeState("default", label:'${currentValue}%', unit:"%")
-  				}
+  			}
             tileAttribute("device.thermostatOperatingState", key: "OPERATING_STATE") {
-    			attributeState("SLEEP", backgroundColor:"#0164a8")
-    			attributeState("HOME", backgroundColor:"#fab907")
-    			attributeState("AWAY", backgroundColor:"#62aa12")
-                attributeState("OFF", backgroundColor:"#c0c0c0")
-                attributeState("MANUAL", backgroundColor:"#804000")
-  }
- 		}
+    			attributeState("SLEEP", label:'${name}', backgroundColor:"#0164a8")
+    			attributeState("HOME", label:'${name}', backgroundColor:"#fab907")
+    			attributeState("AWAY", label:'${name}', backgroundColor:"#62aa12")
+                attributeState("OFF", label:'${name}', backgroundColor:"#c0c0c0")
+                attributeState("MANUAL", label:'${name}', backgroundColor:"#804000")
+		}
+ 	}
         
         standardTile("thermostatOperatingState", "device.thermostatOperatingState", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true) {         
 			state("SLEEP", label:'${name}', backgroundColor:"#0164a8", icon:"st.Bedroom.bedroom2")
