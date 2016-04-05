@@ -84,9 +84,10 @@ def parse(String message) {
         log.error "No HTTP body found in '${message}'"
         return null
     }
-	/*
+	
     def body = new String(msg.body.decodeBase64())
-    //log.debug "body: ${body}"
+    log.debug "body: ${body}"
+	/*
     body = body.replace("&", "&amp;")
     def result = new XmlParser()
     return parseHttpResponse(result.parseText(body.toString()))
