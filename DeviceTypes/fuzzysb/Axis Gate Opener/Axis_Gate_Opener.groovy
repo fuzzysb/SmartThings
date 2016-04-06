@@ -13,11 +13,14 @@
 * 	Axis Gate Opener
 * 
 * 	Author Stuart Buchanan
+* 	Date 2016-04-06 v1.1 Added User Authentication, added logging of response parsed http headers.
 * 	Date 2016-04-05 v1.0 Initial Release
 **/ 
 preferences {
 	input("ServerIP", "text", title: "ServerIP", description: "Enter the IP Address of the Axis Server")
 	input("Port", "text", title: "Port", description: "Enter the TCP Port of the Axis Server")
+	input("username", "text", title: "username", description: "Enter the username for the Axis Server")
+	input("password", "password", title: "password", description: "Enter the Password for the Axis Server")
 }  
  
 metadata {
@@ -47,8 +50,17 @@ tiles(scale: 2) {
             attributeState "off", label:'Closed', action:"switch.on", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/Axis%20Gate%20Opener/GateClosed.png", backgroundColor:"#79b821"
         }
     }
+	standardTile("open", "device.switch", width: 2, height: 2, decoration: "flat") {
+			state "default", label:"Open", action:"switch.on", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/Axis%20Gate%20Opener/GateOpen.png", backgroundColor:"#ffa81e"
+		}	
+	standardTile("close", "device.switch", width: 2, height: 2, decoration: "flat") {
+			state "default", label:"Close", action:"switch.off", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/Axis%20Gate%20Opener/GateClosed.png", backgroundColor:"#79b821"
+		}
+	standardTile("refresh", "device.switch", width: 2, height: 2, decoration: "flat") {
+			state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
+		}			
         main "switch"
-		details(["switch"])
+		details(["switch","open","close","refresh"])
 	}
 }
 
@@ -56,14 +68,18 @@ def updated() {
     log.info "Axis Gate Opener Updated"
     state.dni = createDNI(settings.ServerIP, settings.Port)
     state.hostAddress = "${settings.ServerIP}, ${settings.Port}"
+	refresh()
+}
+
+def installed() {
+    log.info "Axis Gate Opener Updated"
+    state.dni = createDNI(settings.ServerIP, settings.Port)
+    state.hostAddress = "${settings.ServerIP}, ${settings.Port}"
+	refresh()
 }
 
 def parse(String message) {
     def msg = stringToMap(message)
-    if (msg.containsKey("simulator")) {
-        // simulator input
-        return parseHttpResponse(msg)
-    }
 
     if (!msg.containsKey("headers")) {
         log.error "No HTTP headers found in '${message}'"
@@ -73,7 +89,7 @@ def parse(String message) {
     // parse HTTP response headers
     def headers = new String(msg.headers.decodeBase64())
     def parsedHeaders = parseHttpHeaders(headers)
-    //log.debug "parsedHeaders: ${parsedHeaders}"
+    log.debug "parsedHeaders: ${parsedHeaders}"
     if (parsedHeaders.status != 200) {
         log.error "Return Code: ${parsedHeaders.status} Server error: ${parsedHeaders.reason}"
         return null
@@ -83,15 +99,11 @@ def parse(String message) {
     if (!msg.body) {
         log.error "No HTTP body found in '${message}'"
         return null
-    }
-	
-    def body = new String(msg.body.decodeBase64())
-    log.debug "body: ${body}"
-	/*
-    body = body.replace("&", "&amp;")
-    def result = new XmlParser()
-    return parseHttpResponse(result.parseText(body.toString()))
-	*/
+    } else {
+	def body = new String(msg.body.decodeBase64())
+	parseHttpResponse(body)
+	log.debug "body: ${body}"
+	}
 }
 
 private parseHttpHeaders(String headers) {
@@ -107,15 +119,28 @@ private parseHttpHeaders(String headers) {
     return result
 }
 
-private def parseHttpResponse(Node data) {
+private def parseHttpResponse(String data) {
     log.debug("parseHttpResponse(${data})")
-
-    def events = []
-
-    //log.debug "events: ${events}"
-    return events
+	def splitresponse = data.split("=")
+    def port = splitresponse[0]
+	def status = splitresponse[1]
+	if (status == "active"){
+		createEvent(name: "switch", value: "open", descriptionText: "$device.displayName is open", isStateChange: "true")
+	} else if (status == "inactive"){
+		createEvent(name: "switch", value: "close", descriptionText: "$device.displayName is closed", isStateChange: "true")
+	}
+    return status
 }
 
+def poll() {
+	log.debug "Executing poll Command"
+	refresh()
+}
+
+def refresh() {
+	log.debug "Executing Refresh Command"
+	getstatus()
+}
 
 def on() {
 	log.debug "Executing Open Command"
@@ -135,7 +160,7 @@ try {
 	def openResult = getopen()
     log.debug "${openResult}"
 	sendHubCommand(openResult)
-	createEvent(name: "switch", value: "on", descriptionText: "$device.displayName is open", isStateChange: "true")
+	createEvent(name: "switch", value: "open", descriptionText: "$device.displayName is open", isStateChange: "true")
 	}
 	catch (Exception e)
 	{
@@ -151,7 +176,7 @@ try {
 	def closeResult = getclose()
     log.debug "${closeResult}"
 	sendHubCommand(closeResult)
-	createEvent(name: "switch", value: "off", descriptionText: "$device.displayName is closed", isStateChange: "true")
+	createEvent(name: "switch", value: "close", descriptionText: "$device.displayName is open", isStateChange: "true")
 	}
 	catch (Exception e)
 	{
@@ -159,31 +184,47 @@ try {
 	}
 }
 
-
 def getopen(){
+	def userpassascii = "${settings.username}:${settings.password}"
+    def userpass = "Basic " + userpassascii.encodeAsBase64().toString()
     def headers = [:]
 	headers.put("HOST","${settings.ServerIP}:${settings.Port}")
+	headers.put("Authorization","${userpass}")
     def result = new physicalgraph.device.HubAction(
         method: "GET",
         path: "/axis-cgi/io/port.cgi?action=2:/",
         headers: headers
-	
     )
     return result
 }
 
 def getclose(){
+	def userpassascii = "${settings.username}:${settings.password}"
+    def userpass = "Basic " + userpassascii.encodeAsBase64().toString()
     def headers = [:]
-	headers.put("HOST","${settings.ServerIP}:${settings.Port}")
+	headers.put("HOST","${settings.ServerIP}:${settings.Port}")	
+	headers.put("Authorization","${userpass}")
     def result = new physicalgraph.device.HubAction(
         method: "GET",
         path: "/axis-cgi/io/port.cgi?action=2:\\",
         headers: headers
-	
     )
     return result
 }
 
+def getstatus(){
+	def userpassascii = "${settings.username}:${settings.password}"
+    def userpass = "Basic " + userpassascii.encodeAsBase64().toString()
+    def headers = [:]
+	headers.put("HOST","${settings.ServerIP}:${settings.Port}")	
+	headers.put("Authorization","${userpass}")
+    def result = new physicalgraph.device.HubAction(
+        method: "GET",
+        path: "/axis-cgi/io/port.cgi?checkactive=2",
+        headers: headers
+    )
+    return result
+}
 
 private String createDNI(ipaddr, port) { 
     log.debug("createDNI(${ipaddr}, ${port})")
