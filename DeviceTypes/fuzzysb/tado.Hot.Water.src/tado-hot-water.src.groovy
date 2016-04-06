@@ -14,14 +14,6 @@
  *
  *	Author: Stuart Buchanan based on Original Work by Ian M with thanks
  *
- *	Updates: 
- *  2016-04-05 	v1.5 added improved icons and also a manual Mode End function to fall back to Tado Control. 
- 				Also added preference for how long manual mode runs for either ends at Tado Mode Change (TADO_MODE) or User Control (MANUAL), 
-                please ensure the default method is Set in the device properties
- *  2016-04-05 	v1.4 rewrite of complete functions to support Tado API v2
- *  2016-01-20  v1.3 Updated hvacStatus to include include the correct HomeId for Humidity Value
- *  2016-01-15  v1.2 Refactored API request code and added querying/display of humidity
- *	2015-12-23	v1.1 Added functionality to change thermostat settings
  *	2015-12-04	v1.0 Initial release
  */
  
@@ -32,7 +24,7 @@ preferences {
 }  
  
 metadata {
-	definition (name: "Tado Heating Thermostat", namespace: "fuzzysb", author: "Stuart Buchanan") {
+	definition (name: "Tado Hot Water Control", namespace: "fuzzysb", author: "Stuart Buchanan") {
 		capability "Actuator"
         capability "Temperature Measurement"
 		capability "Thermostat Heating Setpoint"
@@ -40,7 +32,6 @@ metadata {
 		capability "Thermostat Mode"
 		capability "Thermostat Operating State"
 		capability "Thermostat"
-		capability "Relative Humidity Measurement"
 		capability "Polling"
 		capability "Refresh"
         
@@ -63,11 +54,8 @@ metadata {
 tiles(scale: 2){
       	multiAttributeTile(name: "thermostat", type:"thermostat", width:6, height:4) {
 			tileAttribute("device.temperature", key:"PRIMARY_CONTROL", canChangeIcon: true, canChangeBackground: true){
-            	attributeState "default", label:'${currentValue}°', backgroundColor:"#fab907", icon:"st.Home.home1"
+            	attributeState "default", label:'${currentValue}°', backgroundColor:"#fab907", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Hot.Water.src/Images/tap_icon.png"
             }
-			tileAttribute("device.humidity", key: "SECONDARY_CONTROL") {
-    			attributeState("default", label:'${currentValue}%', unit:"%")
-  			}
             tileAttribute("device.thermostatOperatingState", key: "OPERATING_STATE") {
     			attributeState("SLEEP", label:'${name}', backgroundColor:"#0164a8")
     			attributeState("HOME", label:'${name}', backgroundColor:"#fab907")
@@ -85,41 +73,41 @@ tiles(scale: 2){
 			state("SLEEP", label:'${name}', backgroundColor:"#0164a8", icon:"st.Bedroom.bedroom2")
             state("HOME", label:'${name}', backgroundColor:"#fab907", icon:"st.Home.home2")
             state("AWAY", label:'${name}', backgroundColor:"#62aa12", icon:"st.Outdoor.outdoor18")
-            state("OFF", label:'${name}', backgroundColor:"#ffffff", icon:"st.switches.switch.off", defaultState: true)
+            state("OFF", label:'${name}', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Hot.Water.src/Images/hvac_off.png", defaultState: true)
             state("MANUAL", label:'${name}', backgroundColor:"#804000", icon:"st.Weather.weather1")
 		}
     	
 		standardTile("thermostatMode", "device.thermostatMode", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true) {
-        	state("HEAT", label:'${name}', backgroundColor:"#ea2a2a", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/heat_mode_icon.png")
-            state("OFF", label:'', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/hvac_off.png", defaultState: true)  
+        	state("HEAT", label:'${name}', backgroundColor:"#ea2a2a", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Hot.Water.src/Images/heat_mode_icon.png")
+            state("OFF", label:'', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Hot.Water.src/Images/hvac_off.png", defaultState: true)  
 		}
 		
         standardTile("refresh", "device.switch", width: 2, height: 1, decoration: "flat") {
 			state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
 		}		
         standardTile("Off", "device.thermostat", width: 2, height: 1, decoration: "flat") {
-			state "default", label:"", action:"thermostat.off", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/hvac_off.png"
+			state "default", label:"", action:"thermostat.off", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Hot.Water.src/Images/hvac_off.png"
 		}
 		standardTile("emergencyHeat", "device.thermostat", width: 2, height: 1, decoration: "flat") {
-			state "default", label:"", action:"thermostat.emergencyHeat", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/emergencyHeat.png"
+			state "default", label:"", action:"thermostat.emergencyHeat", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Hot.Water.src/Images/emergencyHeat.png"
 		}
 		valueTile("outsidetemperature", "device.outsidetemperature", width: 2, height: 1, decoration: "flat") {
 			state "outsidetemperature", label: 'Outside Temp\r\n${currentValue}°'
 		}
 		standardTile("heat", "device.thermostat", width: 2, height: 1, decoration: "flat") {
-			state "default", label:"", action:"thermostat.heat", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/hvac_heat.png"
+			state "default", label:"", action:"thermostat.heat", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Hot.Water.src/Images/hvac_heat.png"
 		}
 		standardTile("heatingSetpointUp", "device.heatingSetpoint", width: 1, height: 1, canChangeIcon: false, decoration: "flat") {
-            state "heatingSetpointUp", label:'', action:"heatingSetpointUp", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/heat_arrow_up.png"
+            state "heatingSetpointUp", label:'', action:"heatingSetpointUp", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Hot.Water.src/Images/heat_arrow_up.png"
         }
         standardTile("heatingSetpointDown", "device.heatingSetpoint", width: 1, height: 1, canChangeIcon: false, decoration: "flat") {
-            state "heatingSetpointDown", label:'', action:"heatingSetpointDown", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/heat_arrow_down.png"
+            state "heatingSetpointDown", label:'', action:"heatingSetpointDown", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Hot.Water.src/Images/heat_arrow_down.png"
         }
 		standardTile("endManualControl", "device.thermostat", width: 2, height: 1, canChangeIcon: false, canChangeBackground: true, decoration: "flat") {
-            state("default", label:'', action:"endManualControl", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/endManual.png")
+            state("default", label:'', action:"endManualControl", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Hot.Water.src/Images/endManual.png")
 		}
 		main "thermostat"
-		details (["thermostat","thermostatMode","outsidetemperature","heatingSetpoint","refresh","heatingSetpointUp","heatingSetpointDown","thermostatOperatingState","emergencyHeat","heat","Off",endManualControl])
+		details (["thermostat","thermostatMode","outsidetemperature","heatingSetpoint","refresh","heatingSetpointUp","heatingSetpointDown","thermostatOperatingState","emergencyHeat","heat","Off","endManualControl"])
 	}
 }
 def updated(){
@@ -179,24 +167,32 @@ def setHeatingSetpoint(targetTemperature) {
 
 def heatingSetpointUp(){
 	log.debug "Current SetPoint Is " + (device.currentValue("thermostatSetpoint")).toString()
-    if ((device.currentValue("thermostatSetpoint").toInteger() - 1 ) < state.MinHeatTemp){
-    	log.debug("cannot decrease heat setpoint, its already at the minimum level of " + state.MinHeatTemp)
-    } else {
-		int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() + 1
-		log.debug "Setting heatingSetpoint up to: ${newSetpoint}"
-		setHeatingSetpoint(newSetpoint)
-    }
+	if(state.supportsWaterTempControl == "true"){ 
+		if ((device.currentValue("thermostatSetpoint").toInteger() - 1 ) < state.MinHeatTemp){
+			log.debug("cannot decrease heat setpoint, its already at the minimum level of " + state.MinHeatTemp)
+		} else {
+			int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() + 1
+			log.debug "Setting heatingSetpoint up to: ${newSetpoint}"
+			setHeatingSetpoint(newSetpoint)
+		}
+	} else {
+		log.debug "Hot Water Temperature Capability Not Supported"
+	}
 }
 
 def heatingSetpointDown(){
 	log.debug "Current SetPoint Is " + (device.currentValue("thermostatSetpoint")).toString()
-    if ((device.currentValue("thermostatSetpoint").toInteger() + 1 ) > state.MaxHeatTemp){
-    	log.debug("cannot increase heat setpoint, its already at the maximum level of " + state.MaxHeatTemp)
-    } else {
-		int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() - 1
-		log.debug "Setting heatingSetpoint down to: ${newSetpoint}"
-		setHeatingSetpoint(newSetpoint)
-    }
+	if(state.supportsWaterTempControl == "true"){ 
+		if ((device.currentValue("thermostatSetpoint").toInteger() + 1 ) > state.MaxHeatTemp){
+			log.debug("cannot increase heat setpoint, its already at the maximum level of " + state.MaxHeatTemp)
+		} else {
+			int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() - 1
+			log.debug "Setting heatingSetpoint down to: ${newSetpoint}"
+			setHeatingSetpoint(newSetpoint)
+		}
+	} else {
+		log.debug "Hot Water Temperature Capability Not Supported"
+	}
 }
 
 // Parse incoming device messages to generate events
@@ -235,15 +231,20 @@ private parseResponse(resp) {
     if(resp.status == 200) {
         log.debug("Executing parseResponse.successTrue")
         def temperature
-        if (temperatureUnit == "C") {
-        	temperature = (Math.round(resp.data.sensorDataPoints.insideTemperature.celsius * 10 ) / 10)
-        }
-        else if(temperatureUnit == "F"){
-        	temperature = (Math.round(resp.data.sensorDataPoints.insideTemperature.fahrenheit * 10) / 10)
-        }
-        log.debug("Read temperature: " + temperature)
-        sendEvent(name: 'temperature', value: temperature, unit: temperatureUnit)
-        log.debug("Send Temperature Event Fired")
+		if (state.supportsWaterTempControl == "true"){
+			if (temperatureUnit == "C") {
+				temperature = (Math.round(resp.data.setting.temperature.celsius * 10 ) / 10)
+			}
+			else if(temperatureUnit == "F"){
+				temperature = (Math.round(resp.data.setting.temperature.fahrenheit * 10) / 10)
+			}
+			log.debug("Read temperature: " + temperature)
+			sendEvent(name: 'temperature', value: temperature, unit: temperatureUnit)
+			log.debug("Send Temperature Event Fired")
+		} else {
+			sendEvent(name: 'temperature', value: "--", unit: temperatureUnit)
+			log.debug("Send Temperature Event Fired")
+		}
         def autoOperation = "OFF"
         if(resp.data.overlayType == null){
         	autoOperation = resp.data.tadoMode
@@ -265,24 +266,17 @@ private parseResponse(resp) {
 		}
 		sendEvent(name: 'thermostatOperatingState', value: autoOperation)
         log.debug("Send thermostatMode Event Fired")
-
-        def humidity 
-        if (resp.data.sensorDataPoints.humidity.percentage != null){
-        	humidity = resp.data.sensorDataPoints.humidity.percentage
-        }else{
-        	humidity = "--"
-        }
-        log.debug("Read humidity: " + humidity)
-			       
-        sendEvent(name: 'humidity', value: humidity,unit: humidityUnit)
-
-       	if (temperatureUnit == "C") {
-        	thermostatSetpoint = resp.data.setting.temperature.celsius
-        }
-        else if(temperatureUnit == "F"){
-        	thermostatSetpoint = resp.data.setting.temperature.fahrenheit
-        }
-        log.debug("Read thermostatSetpoint: " + thermostatSetpoint)
+		if (state.supportsWaterTempControl == "true"){
+			if (temperatureUnit == "C") {
+				thermostatSetpoint = resp.data.setting.temperature.celsius
+			}
+			else if(temperatureUnit == "F"){
+				thermostatSetpoint = resp.data.setting.temperature.fahrenheit
+			}
+			log.debug("Read thermostatSetpoint: " + thermostatSetpoint)
+		} else {
+			thermostatSetpoint = "--"
+		}
 	}	
 
 	else{
@@ -323,25 +317,32 @@ private parseCapabilitiesResponse(resp) {
        	state.tadoType = resp.data.type
         log.debug("Tado Type is ${state.tadoType}")
 
-        if(resp.data.type == "HEATING"){
-        	log.debug("setting HEAT capability state true")
-        	state.supportsHeat = "true"
-            if (state.tempunit == "C"){
-            	state.MaxHeatTemp = resp.data.temperatures.celsius.max
-                log.debug("set state.MaxHeatTemp to : " + state.MaxHeatTemp + "C")
-                state.MinHeatTemp = resp.data.temperatures.celsius.min
-                log.debug("set state.MinHeatTemp to : " + state.MinHeatTemp + "C")
-            } else if (state.tempunit == "F") {
-            	state.MaxHeatTemp = resp.data.temperatures.fahrenheit.max
-                log.debug("set state.MaxHeatTemp to : " + state.MaxHeatTemp + "F")
-                state.MinHeatTemp = resp.data.temperatures.fahrenheit.min
-                log.debug("set state.MinHeatTemp to : " + state.MinHeatTemp + "F")
-           	}    
+        if(resp.data.type == "HOT_WATER"){
+        	log.debug("setting WATER capability state true")
+        	state.supportsWater = "true"
+			if (resp.data.canSetTemperature == "True"){
+			state.supportsWaterTempControl = "true"
+				if (state.tempunit == "C"){
+					state.MaxHeatTemp = resp.data.temperatures.celsius.max
+					log.debug("set state.MaxHeatTemp to : " + state.MaxHeatTemp + "C")
+					state.MinHeatTemp = resp.data.temperatures.celsius.min
+					log.debug("set state.MinHeatTemp to : " + state.MinHeatTemp + "C")
+				} else if (state.tempunit == "F") {
+					state.MaxHeatTemp = resp.data.temperatures.fahrenheit.max
+					log.debug("set state.MaxHeatTemp to : " + state.MaxHeatTemp + "F")
+					state.MinHeatTemp = resp.data.temperatures.fahrenheit.min
+					log.debug("set state.MinHeatTemp to : " + state.MinHeatTemp + "F")
+				}   
+			} else {
+			state.supportsWaterTempControl = "false"
+			}
         } else {
         	log.debug("setting HEAT capability state false")
-        	state.supportsHeat = "false"
+        	state.supportsWater = "false"
         }
-        log.debug("state.supportsHeat = ${state.supportsHeat}")
+        log.debug("state.supportsWater = ${state.supportsWater}")
+		log.debug("state.supportsWaterTempControl = ${state.supportsWaterTempControl}")
+		
     }catch(Exception e){
         log.debug("___exception: " + e)
     }   
@@ -391,19 +392,19 @@ private sendCommand(method, args = []) {
                     ],
         'getcapabilities': [
         			uri: "https://my.tado.com", 
-                    path: "/api/v2/homes/" + state.homeId + "/zones/1/capabilities", 
+                    path: "/api/v2/homes/" + state.homeId + "/zones/0/capabilities", 
                     requestContentType: "application/json", 
                     query: [username:settings.username, password:settings.password]
                     ],
         'status': [
         			uri: "https://my.tado.com", 
-                    path: "/api/v2/homes/" + state.homeId + "/zones/1/state", 
+                    path: "/api/v2/homes/" + state.homeId + "/zones/0/state", 
                     requestContentType: "application/json", 
                     query: [username:settings.username, password:settings.password]
                     ],
 		'temperature': [	
         			uri: "https://my.tado.com",
-        			path: "/api/v2/homes/" + state.homeId + "/zones/1/overlay",
+        			path: "/api/v2/homes/" + state.homeId + "/zones/0/overlay",
         			requestContentType: "application/json",
                     query: [username:settings.username, password:settings.password],
                   	body: args[0]
@@ -416,7 +417,7 @@ private sendCommand(method, args = []) {
                    	],
         'deleteEntry': [	
         			uri: "https://my.tado.com",
-        			path: "/api/v2/homes/" + state.homeId + "/zones/1/overlay",
+        			path: "/api/v2/homes/" + state.homeId + "/zones/0/overlay",
         			requestContentType: "application/json",
                     query: [username:settings.username, password:settings.password],
                    	]
@@ -492,36 +493,46 @@ def autoCommand(){
 	log.debug "Executing 'sendCommand.autoCommand'"
     def initialsetpointtemp
 	def terminationmode = settings.manualmode
-    if(device.currentValue("thermostatSetpoint") == 0){
-    	initialsetpointtemp = device.currentValue("temperature")
-    } else {
-    	initialsetpointtemp = device.currentValue("thermostatSetpoint")
-    }
-	def jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", temperature:[celsius:initialsetpointtemp], type:"HEATING"], termination:[type:terminationmode]])
+	def jsonbody
+	if(state.supportsWaterTempControl == "true"){ 
+		if(device.currentValue("thermostatSetpoint") == 0){
+			initialsetpointtemp = device.currentValue("temperature")
+		} else {
+			initialsetpointtemp = device.currentValue("thermostatSetpoint")
+		}
+		jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", temperature:[celsius:initialsetpointtemp], type:"HOT_WATER"], termination:[type:terminationmode]])
+	} else {
+		jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", type:"HOT_WATER"], termination:[type:terminationmode]])
+	}
 	sendCommand("temperature",[jsonbody])
 }
 
 def heat(){
 	heatCommand()
+	refresh()
 }
 
 def setHeatingTempCommand(targetTemperature){
     def jsonbody
 	def terminationmode = settings.manualmode
- 	if (state.tempunit == "C") {
-        	jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", temperature:[celsius:targetTemperature], type:"HEATING"], termination:[type:terminationmode]])
-        }
-        else if(state.tempunit == "F"){
-        	jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", temperature:[fahrenheit:targetTemperature], type:"HEATING"], termination:[type:terminationmode]])
-        }
-	log.debug "Executing 'sendCommand.setHeatingTempCommand' to ${targetTemperature}"
-	sendCommand("temperature",[jsonbody])
+	if(state.supportsWaterTempControl == "true"){ 
+		if (state.tempunit == "C") {
+				jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", temperature:[celsius:targetTemperature], type:"HOT_WATER"], termination:[type:terminationmode]])
+			}
+			else if(state.tempunit == "F"){
+				jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", temperature:[fahrenheit:targetTemperature], type:"HOT_WATER"], termination:[type:terminationmode]])
+			}
+		log.debug "Executing 'sendCommand.setHeatingTempCommand' to ${targetTemperature}"
+		sendCommand("temperature",[jsonbody])
+	} else {
+		log.debug "Hot Water Temperature Capability Not Supported"
+	}
 }
 
 def offCommand(){
 	log.debug "Executing 'sendCommand.offCommand'"
 	def terminationmode = settings.manualmode
-    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"OFF", type:"HEATING"], termination:[type:terminationmode]])
+    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"OFF", type:"HOT_WATER"], termination:[type:terminationmode]])
 	sendCommand("temperature",[jsonbody])
 }
 
@@ -532,26 +543,37 @@ def onCommand(){
 def heatCommand(){
 	log.debug "Executing 'sendCommand.heatCommand'"
 	def terminationmode = settings.manualmode
+	def jsonbody
     def initialsetpointtemp
-    if(device.currentValue("thermostatSetpoint") == 0){
-    	initialsetpointtemp = 21
-    } else {
-    	initialsetpointtemp = device.currentValue("thermostatSetpoint")
-    }
-    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", temperature:[celsius:initialsetpointtemp], type:"HEATING"], termination:[type:terminationmode]])
+	if(state.supportsWaterTempControl == "true"){ 
+		if(device.currentValue("thermostatSetpoint") == 0){
+			initialsetpointtemp = 21
+		} else {
+			initialsetpointtemp = device.currentValue("thermostatSetpoint")
+		}
+		jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", temperature:[celsius:initialsetpointtemp], type:"HOT_WATER"], termination:[type:terminationmode]])
+	} else {
+		jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", type:"HOT_WATER"], termination:[type:terminationmode]])
+	}
 	sendCommand("temperature",[jsonbody])
 }
 
 def emergencyHeat(){
 	log.debug "Executing 'sendCommand.heatCommand'"
     def initialsetpointtemp
-    if(device.currentValue("thermostatSetpoint") == 0){
-    	initialsetpointtemp = 23
-    } else {
-    	initialsetpointtemp = device.currentValue("thermostatSetpoint")
-    }
-    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", temperature:[celsius:initialsetpointtemp], type:"HEATING"], termination:[durationInSeconds:"3600", type:"TIMER"]])
+	def jsonbody
+	if(state.supportsWaterTempControl == "true"){ 
+	    if(device.currentValue("thermostatSetpoint") == 0){
+			initialsetpointtemp = 90
+		} else {
+			initialsetpointtemp = device.currentValue("thermostatSetpoint")
+		}
+		jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", temperature:[celsius:initialsetpointtemp], type:"HOT_WATER"], termination:[durationInSeconds:"3600", type:"TIMER"]])
+	} else {
+		jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", type:"HOT_WATER"], termination:[durationInSeconds:"3600", type:"TIMER"]])
+	}
 	sendCommand("temperature",[jsonbody])
+	refresh()
 }
 
 def statusCommand(){
