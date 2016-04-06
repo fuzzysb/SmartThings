@@ -13,6 +13,9 @@
  *	Tado Thermostat
  *
  *	Author: Stuart Buchanan, Based on original work by Ian M with thanks
+ *	Date: 2016-04-05 v2.2 Added Fan Speed & Emergency Heat (1 Hour) Controls and also a manual Mode End function to fall back to Tado Control. 
+ 						  Also added preference for how long manual mode runs for either ends at Tado Mode Change (TADO_MODE) or User Control (MANUAL), 
+                          please ensure the default method is Set in the device properties
  *	Date: 2016-04-05 v2.1 Minor Bug Fixes & improved Icons
  *	Date: 2016-04-05 v2.0 Further Changes to MultiAttribute Tile
  *	Date: 2016-04-05 v1.9 Amended Device Handler Name
@@ -33,7 +36,7 @@ import groovy.json.JsonOutput
 preferences {
 	input("username", "text", title: "Username", description: "Your Tado username")
 	input("password", "password", title: "Password", description: "Your Tado password")
-    //input("tempunit", "enum", title: "Temperature Unit to Use (Celcius or Fahrenheit)?", options: ["C","F"], required: false, defaultValue: "C")
+    input("manualmode", "enum", title: "Default Manual Overide Method", options: ["TADO_MODE","MANUAL"], required: false, defaultValue: "TADO_MODE")
 }  
  
 metadata {
@@ -57,6 +60,12 @@ metadata {
         command "coolingSetpointDown"
         command "dry"
         command "on"
+        command "endManualControl"
+        command "fanSpeedAuto"
+        command "fanSpeedHigh"
+        command "fanSpeedMid"
+        command "fanSpeedLow"
+        command "emergencyHeat"
         
 	}
 
@@ -122,11 +131,11 @@ metadata {
 		}
        
 		standardTile("thermostatFanMode", "device.thermostatFanMode", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true) {
-        	state("OFF", label:'', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_off_icon.png", defaultState: true)
-            state("AUTO", label:'', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_auto_icon.png")
-            state("HIGH", label:'', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_high_icon.png")
-            state("MIDDLE", label:'', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_med_icon.png")
-            state("LOW", label:'', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_low_icon.png")       
+        	state("OFF", label:'', icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_off_icon.png", defaultState: true)
+            state("AUTO", label:'', icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_auto_icon.png")
+            state("HIGH", label:'', icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_high_icon.png")
+            state("MIDDLE", label:'', icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_med_icon.png")
+            state("LOW", label:'', icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_low_icon.png")       
 		}
 		standardTile("setAuto", "device.thermostat", width: 2, height: 1, decoration: "flat") {
 			state "default", label:"", action:"thermostat.auto", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/hvac_auto.png"
@@ -146,7 +155,7 @@ metadata {
         standardTile("heat", "device.thermostat", width: 2, height: 1, decoration: "flat") {
 			state "default", label:"", action:"thermostat.heat", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/hvac_heat.png"
 		}
-        standardTile("emergencyHeat", "device.thermostat", width: 2, height: 2, decoration: "flat") {
+        standardTile("emergencyHeat", "device.thermostat", width: 2, height: 1, decoration: "flat") {
 			state "default", label:"", action:"thermostat.emergencyHeat", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/emergencyHeat.png"
 		}
         standardTile("fan", "device.thermostat", width: 2, height: 1, decoration: "flat") {
@@ -164,9 +173,24 @@ metadata {
         standardTile("heatingSetpointDown", "device.heatingSetpoint", canChangeIcon: false, decoration: "flat") {
             state "heatingSetpointDown", label:'  ', action:"heatingSetpointDown", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/heat_arrow_down.png"
         }
+		standardTile("SetFanSpeedAuto", "device.thermostatFanMode", width: 2, height: 1, canChangeIcon: true, canChangeBackground: true, decoration: "flat") {
+            state("AUTO", label:'', action:"fanSpeedAuto",  icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_auto_icon.png")
+        }
+        standardTile("SetFanSpeedHigh", "device.thermostatFanMode", width: 2, height: 1, canChangeIcon: true, canChangeBackground: true, decoration: "flat") {
+            state("AUTO", label:'', action:"fanSpeedHigh",  icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_high_icon.png")
+        }
+        standardTile("SetFanSpeedMid", "device.thermostatFanMode", width: 2, height: 1, canChangeIcon: true, canChangeBackground: true, decoration: "flat") {
+            state("AUTO", label:'', action:"fanSpeedMid",  icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_med_icon.png")
+        }
+        standardTile("SetFanSpeedLow", "device.thermostatFanMode", width: 2, height: 1, canChangeIcon: true, canChangeBackground: true, decoration: "flat") {
+            state("AUTO", label:'', action:"fanSpeedLow",  icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_low_icon.png")
+        }
+		standardTile("endManualControl", "device.thermostat", width: 2, height: 1, canChangeIcon: false, canChangeBackground: true, decoration: "flat") {
+            state("default", label:'', action:"endManualControl", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/endManual.png")
+		}
 		
 		main(["thermostat"])
-		details(["thermostat","thermostatMode","coolingSetpointUp","coolingSetpointDown","autoOperation","heatingSetpointUp","heatingSetpointDown","outsidetemperature","thermostatSetpoint","thermostatOperatingState","refresh","thermostatFanMode","setAuto","setOn","setOff","fan","cool","heat","setDry"])
+		details(["thermostat","thermostatMode","coolingSetpointUp","coolingSetpointDown","autoOperation","heatingSetpointUp","heatingSetpointDown","outsidetemperature","thermostatSetpoint","thermostatOperatingState","refresh","thermostatFanMode","setAuto","setOn","setOff","fan","cool","heat","setDry","SetFanSpeedAuto","emergencyHeat","endManualControl","SetFanSpeedLow","SetFanSpeedMid","SetFanSpeedHigh"])
 	}
 }
 
@@ -186,6 +210,11 @@ private parseMeResponse(resp) {
 
 private parseputResponse(resp) {
 	log.debug("Executing parseputResponse: "+resp.data)
+    log.debug("Output status: "+resp.status)
+}
+
+private parsedeleteResponse(resp) {
+	log.debug("Executing parsedeleteResponse: "+resp.data)
     log.debug("Output status: "+resp.status)
 }
 
@@ -587,6 +616,12 @@ private sendCommand(method, args = []) {
         			path: "/api/v2/homes/" + state.homeId + "/weather",
         			requestContentType: "application/json",
     				query: [username:settings.username, password:settings.password]
+                   	],
+        'deleteEntry': [	
+        			uri: "https://my.tado.com",
+        			path: "/api/v2/homes/" + state.homeId + "/zones/1/overlay",
+        			requestContentType: "application/json",
+                    query: [username:settings.username, password:settings.password],
                    	]
 	]
 
@@ -622,6 +657,10 @@ private sendCommand(method, args = []) {
             httpGet(request) { resp ->            
                 parseweatherResponse(resp)
             }
+        }else if (method == "deleteEntry"){
+            httpDelete(request) { resp ->            
+                parsedeleteResponse(resp)
+            }
         }else{
             httpGet(request)
         }
@@ -650,19 +689,22 @@ def getTempUnitCommand(){
 
 def autoCommand(){
 	log.debug "Executing 'sendCommand.autoCommand'"
-	def jsonbody = new groovy.json.JsonOutput().toJson([setting:[mode:"AUTO", power:"ON", type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
+    def terminationmode = settings.manualmode
+	def jsonbody = new groovy.json.JsonOutput().toJson([setting:[mode:"AUTO", power:"ON", type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
 	sendCommand("temperature",[jsonbody])
 }
 
 def dryCommand(){
+	def terminationmode = settings.manualmode
 	log.debug "Executing 'sendCommand.dryCommand'"
-    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[mode:"DRY", power:"ON", type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
+    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[mode:"DRY", power:"ON", type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
 	sendCommand("temperature",[jsonbody])
 }
 
 def fanAuto(){
+	def terminationmode = settings.manualmode
 	log.debug "Executing 'sendCommand.fanAutoCommand'"
-    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[mode:"FAN", power:"ON", type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
+    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[mode:"FAN", power:"ON", type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
 	sendCommand("temperature",[jsonbody])
 }
 
@@ -683,8 +725,92 @@ def heat(){
 }
 
 
+def endManualControl(){
+	log.debug "Executing 'sendCommand.endManualControl'"
+	sendCommand("deleteEntry",[])
+}
+
+
+def fanSpeedAuto(){
+    def supportedfanspeed
+    def terminationmode = settings.manualmode
+    def jsonbody
+    if (state.SupportsCoolAutoFanSpeed == "true"){
+    	supportedfanspeed = "AUTO"
+    } else {
+        supportedfanspeed = "HIGH"
+    } 
+	def curSetTemp = (device.currentValue("thermostatSetpoint"))
+	def curMode = (device.currentValue("thermostatMode"))
+	if (curMode == "COOL" || curMode == "HEAT"){
+		if (state.tempunit == "C") {
+        	jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:curMode, power:"ON", temperature:[celsius:curSetTemp], type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
+        }
+        else if(state.tempunit == "F"){
+            jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:curMode, power:"ON", temperature:[fahrenheit:curSetTemp], type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
+        }
+		log.debug "Executing 'sendCommand.fanSpeedAuto' to ${supportedfanspeed}"
+		sendCommand("temperature",[jsonbody])
+	}
+}
+
+def fanSpeedHigh(){
+    def jsonbody
+    def supportedfanspeed = "HIGH"
+    def terminationmode = settings.manualmode
+	def curSetTemp = (device.currentValue("thermostatSetpoint"))
+	def curMode = (device.currentValue("thermostatMode"))
+	if (curMode == "COOL" || curMode == "HEAT"){
+		if (state.tempunit == "C") {
+        	jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:curMode, power:"ON", temperature:[celsius:curSetTemp], type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
+        }
+        else if(state.tempunit == "F"){
+            jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:curMode, power:"ON", temperature:[fahrenheit:curSetTemp], type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
+        }
+		log.debug "Executing 'sendCommand.fanSpeedAuto' to ${supportedfanspeed}"
+		sendCommand("temperature",[jsonbody])
+	}
+}
+
+def fanSpeedMid(){
+    def supportedfanspeed = "MIDDLE"
+    def terminationmode = settings.manualmode
+    def jsonbody
+	def curSetTemp = (device.currentValue("thermostatSetpoint"))
+	def curMode = (device.currentValue("thermostatMode"))
+	if (curMode == "COOL" || curMode == "HEAT"){
+		if (state.tempunit == "C") {
+        	jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:curMode, power:"ON", temperature:[celsius:curSetTemp], type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
+        }
+        else if(state.tempunit == "F"){
+            jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:curMode, power:"ON", temperature:[fahrenheit:curSetTemp], type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
+        }
+		log.debug "Executing 'sendCommand.fanSpeedMid' to ${supportedfanspeed}"
+		sendCommand("temperature",[jsonbody])
+	}
+}
+
+def fanSpeedLow(){
+    def supportedfanspeed = "LOW"
+    def terminationmode = settings.manualmode
+    def jsonbody
+	def curSetTemp = (device.currentValue("thermostatSetpoint"))
+	def curMode = (device.currentValue("thermostatMode"))
+	if (curMode == "COOL" || curMode == "HEAT"){
+		if (state.tempunit == "C") {
+        	jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:curMode, power:"ON", temperature:[celsius:curSetTemp], type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
+        }
+        else if(state.tempunit == "F"){
+            jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:curMode, power:"ON", temperature:[fahrenheit:curSetTemp], type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
+        }
+		log.debug "Executing 'sendCommand.fanSpeedLow' to ${supportedfanspeed}"
+		sendCommand("temperature",[jsonbody])
+	}
+}
+
 def setCoolingTempCommand(targetTemperature){
     def supportedfanspeed
+    def terminationmode = settings.manualmode
     def jsonbody
     if (state.SupportsCoolAutoFanSpeed == "true"){
     	supportedfanspeed = "AUTO"
@@ -692,10 +818,10 @@ def setCoolingTempCommand(targetTemperature){
         supportedfanspeed = "HIGH"
     }  
  	if (state.tempunit == "C") {
-        	jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"COOL", power:"ON", temperature:[celsius:targetTemperature], type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
+        	jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"COOL", power:"ON", temperature:[celsius:targetTemperature], type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
         }
         else if(state.tempunit == "F"){
-            jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"COOL", power:"ON", temperature:[fahrenheit:targetTemperature], type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
+            jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"COOL", power:"ON", temperature:[fahrenheit:targetTemperature], type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
         }
 	log.debug "Executing 'sendCommand.setCoolingTempCommand' to ${targetTemperature}"
 	sendCommand("temperature",[jsonbody])
@@ -703,6 +829,7 @@ def setCoolingTempCommand(targetTemperature){
 
 def setHeatingTempCommand(targetTemperature){
     def supportedfanspeed
+    def terminationmode = settings.manualmode
     def jsonbody
     if (state.SupportsHeatAutoFanSpeed == "true"){
     	supportedfanspeed = "AUTO"
@@ -710,10 +837,10 @@ def setHeatingTempCommand(targetTemperature){
         supportedfanspeed = "HIGH"
         }  
  	if (state.tempunit == "C") {
-        	jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"HEAT", power:"ON", temperature:[celsius:targetTemperature], type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
+        	jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"HEAT", power:"ON", temperature:[celsius:targetTemperature], type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
         }
         else if(state.tempunit == "F"){
-        	jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"HEAT", power:"ON", temperature:[fahrenheit:targetTemperature], type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
+        	jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"HEAT", power:"ON", temperature:[fahrenheit:targetTemperature], type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
         }
 	log.debug "Executing 'sendCommand.setHeatingTempCommand' to ${targetTemperature}"
 	sendCommand("temperature",[jsonbody])
@@ -721,11 +848,13 @@ def setHeatingTempCommand(targetTemperature){
 
 def offCommand(){
 	log.debug "Executing 'sendCommand.offCommand'"
-    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[type:"AIR_CONDITIONING", power:"OFF"], termination:[type:"TADO_MODE"]])
+    def terminationmode = settings.manualmode
+    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[type:"AIR_CONDITIONING", power:"OFF"], termination:[type:terminationmode]])
 	sendCommand("temperature",[jsonbody])
 }
 
 def onCommand(){
+	def terminationmode = settings.manualmode
     def supportedfanspeed
     if (state.SupportsHeatAutoFanSpeed == "true"){
     	supportedfanspeed = "AUTO"
@@ -733,12 +862,13 @@ def onCommand(){
         supportedfanspeed = "HIGH"
         }  
 	log.debug "Executing 'sendCommand.onCommand'"
-    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"COOL", power:"ON", temperature:[celsius:21], type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
+    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"COOL", power:"ON", temperature:[celsius:21], type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
 	sendCommand("temperature",[jsonbody])
 }
 
 def coolCommand(){
 	log.debug "Executing 'sendCommand.coolCommand'"
+    def terminationmode = settings.manualmode
     def initialsetpointtemp
     def supportedfanspeed
     if (state.SupportsCoolAutoFanSpeed == "true"){
@@ -751,12 +881,13 @@ def coolCommand(){
     } else {
     	initialsetpointtemp = device.currentValue("thermostatSetpoint")
     }
-    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"COOL", power:"ON", temperature:[celsius:initialsetpointtemp], type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
+    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"COOL", power:"ON", temperature:[celsius:initialsetpointtemp], type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
 	sendCommand("temperature",[jsonbody])
 }
 
 def heatCommand(){
 	log.debug "Executing 'sendCommand.heatCommand'"
+    def terminationmode = settings.manualmode
     def initialsetpointtemp
     def supportedfanspeed
     if (state.SupportsHeatAutoFanSpeed == "true"){
@@ -769,7 +900,7 @@ def heatCommand(){
     } else {
     	initialsetpointtemp = device.currentValue("thermostatSetpoint")
     }
-    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"HEAT", power:"ON", temperature:[celsius:initialsetpointtemp], type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
+    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"HEAT", power:"ON", temperature:[celsius:initialsetpointtemp], type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
 	sendCommand("temperature",[jsonbody])
 }
 
