@@ -13,6 +13,7 @@
 * 	Axis Gate Opener
 * 
 * 	Author Stuart Buchanan
+* 	Date 2016-04-06 v1.2 should now correctly get gate status and handle state changes correctly
 * 	Date 2016-04-06 v1.1 Added User Authentication, added logging of response parsed http headers.
 * 	Date 2016-04-05 v1.0 Initial Release
 **/ 
