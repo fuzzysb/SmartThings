@@ -124,10 +124,11 @@ private def parseHttpResponse(String data) {
 	def splitresponse = data.split("=")
     def port = splitresponse[0]
 	def status = splitresponse[1]
+	log.debug("Gate status: " + status)
 	if (status == "active"){
-		createEvent(name: "switch", value: "open", descriptionText: "$device.displayName is open", isStateChange: "true")
+		createEvent(name: "switch", value: "on", descriptionText: "$device.displayName is open", isStateChange: "true")
 	} else if (status == "inactive"){
-		createEvent(name: "switch", value: "close", descriptionText: "$device.displayName is closed", isStateChange: "true")
+		createEvent(name: "switch", value: "off", descriptionText: "$device.displayName is closed", isStateChange: "true")
 	}
     return status
 }
@@ -145,11 +146,13 @@ def refresh() {
 def on() {
 	log.debug "Executing Open Command"
 	open()
+	refresh()
 }
 
 def off() {
 	log.debug "Executing Close Command"
 	close()
+	refresh()
 }
 
 def open(){
@@ -165,7 +168,6 @@ try {
 	{
    		log.debug "Hit Exception $e"
 	}
-createEvent(name: "switch", value: "open", descriptionText: "$device.displayName is open", isStateChange: "true")
 }
 
 def close(){
@@ -181,7 +183,6 @@ try {
 	{
    		log.debug "Hit Exception $e"
 	}
-createEvent(name: "switch", value: "close", descriptionText: "$device.displayName is closed", isStateChange: "true")
 }
 
 def getopen(){
