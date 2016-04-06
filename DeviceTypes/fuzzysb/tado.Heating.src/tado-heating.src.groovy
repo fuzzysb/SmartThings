@@ -109,17 +109,17 @@ tiles(scale: 2){
 		standardTile("heat", "device.thermostat", width: 2, height: 1, decoration: "flat") {
 			state "default", label:"", action:"thermostat.heat", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/hvac_heat.png"
 		}
-		standardTile("heatingSetpointUp", "device.heatingSetpoint", width: 2, height: 1, canChangeIcon: false, decoration: "flat") {
+		standardTile("heatingSetpointUp", "device.heatingSetpoint", width: 1, height: 1, canChangeIcon: false, decoration: "flat") {
             state "heatingSetpointUp", label:'', action:"heatingSetpointUp", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/heat_arrow_up.png"
         }
-        standardTile("heatingSetpointDown", "device.heatingSetpoint", width: 2, height: 1, canChangeIcon: false, decoration: "flat") {
+        standardTile("heatingSetpointDown", "device.heatingSetpoint", width: 1, height: 1, canChangeIcon: false, decoration: "flat") {
             state "heatingSetpointDown", label:'', action:"heatingSetpointDown", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/heat_arrow_down.png"
         }
 		standardTile("endManualControl", "device.thermostat", width: 2, height: 1, canChangeIcon: false, canChangeBackground: true, decoration: "flat") {
             state("default", label:'', action:"endManualControl", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/endManual.png")
 		}
 		main "thermostat"
-		details (["thermostat","thermostatMode","outsidetemperature","heatingSetpoint","heatingSetpointUp","heatingSetpointDown","thermostatOperatingState","emergencyHeat","heat","Off",endManualControl,"refresh"])
+		details (["thermostat","thermostatMode","outsidetemperature","heatingSetpoint","refresh","heatingSetpointUp","heatingSetpointDown","thermostatOperatingState","emergencyHeat","heat","Off",endManualControl])
 	}
 }
 def updated(){
