@@ -36,7 +36,7 @@ import groovy.json.JsonOutput
 preferences {
 	input("username", "text", title: "Username", description: "Your Tado username")
 	input("password", "password", title: "Password", description: "Your Tado password")
-    input("manualmode", "enum", title: "Default Manual Overide Method", options: ["TADO_MODE","MANUAL"], required: false, defaultValue: "TADO_MODE")
+    input("manualmode", "enum", title: "Default Manual Overide Method", options: ["TADO_MODE","MANUAL"], required: false, defaultValue:"TADO_MODE")
 }  
  
 metadata {
