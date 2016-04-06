@@ -160,12 +160,12 @@ try {
 	def openResult = getopen()
     log.debug "${openResult}"
 	sendHubCommand(openResult)
-	createEvent(name: "switch", value: "open", descriptionText: "$device.displayName is open", isStateChange: "true")
 	}
 	catch (Exception e)
 	{
    		log.debug "Hit Exception $e"
 	}
+createEvent(name: "switch", value: "open", descriptionText: "$device.displayName is open", isStateChange: "true")
 }
 
 def close(){
@@ -176,12 +176,12 @@ try {
 	def closeResult = getclose()
     log.debug "${closeResult}"
 	sendHubCommand(closeResult)
-	createEvent(name: "switch", value: "close", descriptionText: "$device.displayName is open", isStateChange: "true")
 	}
 	catch (Exception e)
 	{
    		log.debug "Hit Exception $e"
 	}
+createEvent(name: "switch", value: "close", descriptionText: "$device.displayName is closed", isStateChange: "true")
 }
 
 def getopen(){
