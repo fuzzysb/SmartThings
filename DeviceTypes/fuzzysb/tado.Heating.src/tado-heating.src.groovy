@@ -15,6 +15,9 @@
  *	Author: Stuart Buchanan based on Original Work by Ian M with thanks
  *
  *	Updates: 
+ *  2016-04-05 	v1.5 added improved icons and also a manual Mode End function to fall back to Tado Control. 
+ 				Also added preference for how long manual mode runs for either ends at Tado Mode Change (TADO_MODE) or User Control (MANUAL), 
+                please ensure the default method is Set in the device properties
  *  2016-04-05 	v1.4 rewrite of complete functions to support Tado API v2
  *  2016-01-20  v1.3 Updated hvacStatus to include include the correct HomeId for Humidity Value
  *  2016-01-15  v1.2 Refactored API request code and added querying/display of humidity
@@ -25,7 +28,7 @@
 preferences {
 	input("username", "text", title: "Username", description: "Your Tado username")
 	input("password", "password", title: "Password", description: "Your Tado password")
-	//input("tempunit", "enum", title: "Temperature Unit to Use (Celcius or Fahrenheit)?", options: ["C","F"], required: false, defaultValue: "C")
+    input("manualmode", "enum", title: "Default Manual Overide Method", options: ["TADO_MODE","MANUAL"], required: false, defaultValue:"TADO_MODE")
 }  
  
 metadata {
@@ -34,6 +37,7 @@ metadata {
         capability "Temperature Measurement"
 		capability "Thermostat Heating Setpoint"
 		capability "Thermostat Setpoint"
+		capability "Thermostat Mode"
 		capability "Thermostat Operating State"
 		capability "Thermostat"
 		capability "Relative Humidity Measurement"
@@ -43,6 +47,9 @@ metadata {
         
         command "heatingSetpointUp"
         command "heatingSetpointDown"
+		command "on"
+        command "endManualControl"
+		command "emergencyHeat"
 
 	}
 
@@ -82,32 +89,37 @@ tiles(scale: 2){
             state("MANUAL", label:'${name}', backgroundColor:"#804000", icon:"st.Weather.weather1")
 		}
     	
+		standardTile("thermostatMode", "device.thermostatMode", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true) {
+        	state("HEAT", label:'${name}', backgroundColor:"#ea2a2a", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/heat_mode_icon.png")
+            state("OFF", label:'', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/hvac_off.png", defaultState: true)  
+		}
+		
         standardTile("refresh", "device.switch", width: 2, height: 1, decoration: "flat") {
 			state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
 		}		
-        standardTile("Auto", "device.thermostat", width: 2, height: 1, decoration: "flat") {
-			state "default", label:"", action:"thermostat.auto", icon:"st.thermostat.heat-auto"
-		}
         standardTile("Off", "device.thermostat", width: 2, height: 1, decoration: "flat") {
-			state "default", label:"", action:"thermostat.off", icon:"st.thermostat.heating-cooling-off"
+			state "default", label:"", action:"thermostat.off", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/hvac_off.png"
 		}
-		standardTile("emergencyHeat", "device.thermostat", width: 2, height: 2, decoration: "flat") {
-			state "default", label:"", action:"thermostat.emergencyHeat", icon:"st.thermostat.emergency-heat"
+		standardTile("emergencyHeat", "device.thermostat", width: 2, height: 1, decoration: "flat") {
+			state "default", label:"", action:"thermostat.emergencyHeat", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/emergencyHeat.png"
 		}
 		valueTile("outsidetemperature", "device.outsidetemperature", width: 2, height: 1, decoration: "flat") {
 			state "outsidetemperature", label: 'Outside Temp\r\n${currentValue}°'
 		}
 		standardTile("heat", "device.thermostat", width: 2, height: 1, decoration: "flat") {
-			state "default", label:"", action:"thermostat.heat", icon:"st.thermostat.heat"
+			state "default", label:"", action:"thermostat.heat", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/hvac_heat.png"
 		}
 		standardTile("heatingSetpointUp", "device.heatingSetpoint", width: 2, height: 1, canChangeIcon: false, decoration: "flat") {
-            state "heatingSetpointUp", label:'', action:"heatingSetpointUp", icon:"st.thermostat.thermostat-up", backgroundColor:"#bc2323"
+            state "heatingSetpointUp", label:'', action:"heatingSetpointUp", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/heat_arrow_up.png"
         }
         standardTile("heatingSetpointDown", "device.heatingSetpoint", width: 2, height: 1, canChangeIcon: false, decoration: "flat") {
-            state "heatingSetpointDown", label:'', action:"heatingSetpointDown", icon:"st.thermostat.thermostat-down", backgroundColor:"#bc2323"
+            state "heatingSetpointDown", label:'', action:"heatingSetpointDown", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/heat_arrow_down.png"
         }
+		standardTile("endManualControl", "device.thermostat", width: 2, height: 1, canChangeIcon: false, canChangeBackground: true, decoration: "flat") {
+            state("default", label:'', action:"endManualControl", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/endManual.png")
+		}
 		main "thermostat"
-		details (["thermostat","outsidetemperature","heatingSetpoint","thermostatOperatingState","emergencyHeat","refresh","heatingSetpointUp","heatingSetpointDown","heat","Off","Auto"])
+		details (["thermostat","thermostatMode","outsidetemperature","heatingSetpoint","heatingSetpointUp","heatingSetpointDown","thermostatOperatingState","emergencyHeat","heat","Off",endManualControl,"refresh"])
 	}
 }
 def updated(){
@@ -128,7 +140,6 @@ def installed(){
 	]
 	delayBetween(cmds, 2000)
 }
-
 
 def poll() {
 	log.debug "Executing 'poll'"
@@ -188,8 +199,27 @@ def heatingSetpointDown(){
     }
 }
 
+// Parse incoming device messages to generate events
+private parseMeResponse(resp) {
+    log.debug("Executing parseMeResponse: "+resp.data)
+    log.debug("Output status: "+resp.status)
+    if(resp.status == 200) {
+    	log.debug("Executing parseMeResponse.successTrue")
+        state.homeId = resp.data.homes[0].id
+        log.debug("Got HomeID Value: " + state.homeId)
+        
+    }else if(resp.status == 201){
+        log.debug("Something was created/updated")
+    }
+}
+
 private parseputResponse(resp) {
 	log.debug("Executing parseputResponse: "+resp.data)
+    log.debug("Output status: "+resp.status)
+}
+
+private parsedeleteResponse(resp) {
+	log.debug("Executing parsedeleteResponse: "+resp.data)
     log.debug("Output status: "+resp.status)
 }
 
@@ -225,6 +255,15 @@ private parseResponse(resp) {
         }
         log.debug("Read thermostatOperatingState: " + autoOperation)
         sendEvent(name: 'thermostatOperatingState', value: autoOperation)
+       
+		if (resp.data.tadoMode == "HOME" && resp.data.setting.power == "ON"){
+			sendEvent(name: 'thermostatMode', value: "HEAT")
+			log.debug("Send thermostatMode Event Fired")
+		} else if(resp.data.setting.power == "OFF"){
+			sendEvent(name: 'thermostatMode', value: "OFF")
+			log.debug("Send thermostatMode Event Fired")
+		}
+		sendEvent(name: 'thermostatOperatingState', value: autoOperation)
         log.debug("Send thermostatMode Event Fired")
 
         def humidity 
@@ -275,8 +314,6 @@ private parseTempResponse(resp) {
     }
 }
 
-
-
 private parseCapabilitiesResponse(resp) {
     log.debug("Executing parseCapabilitiesResponse: "+resp.data)
     log.debug("Output status: " + resp.status)
@@ -289,7 +326,6 @@ private parseCapabilitiesResponse(resp) {
         if(resp.data.type == "HEATING"){
         	log.debug("setting HEAT capability state true")
         	state.supportsHeat = "true"
-            def heatfanmodelist = resp.data.HEAT.fanSpeeds
             if (state.tempunit == "C"){
             	state.MaxHeatTemp = resp.data.temperatures.celsius.max
                 log.debug("set state.MaxHeatTemp to : " + state.MaxHeatTemp + "C")
@@ -377,6 +413,12 @@ private sendCommand(method, args = []) {
         			path: "/api/v2/homes/" + state.homeId + "/weather",
         			requestContentType: "application/json",
     				query: [username:settings.username, password:settings.password]
+                   	],
+        'deleteEntry': [	
+        			uri: "https://my.tado.com",
+        			path: "/api/v2/homes/" + state.homeId + "/zones/1/overlay",
+        			requestContentType: "application/json",
+                    query: [username:settings.username, password:settings.password],
                    	]
 	]
 
@@ -412,6 +454,10 @@ private sendCommand(method, args = []) {
             httpGet(request) { resp ->            
                 parseweatherResponse(resp)
             }
+        }else if (method == "deleteEntry"){
+            httpDelete(request) { resp ->            
+                parsedeleteResponse(resp)
+            }
         }else{
             httpGet(request)
         }
@@ -421,6 +467,12 @@ private sendCommand(method, args = []) {
 }
 
 // Commands to device
+
+def endManualControl(){
+	log.debug "Executing 'sendCommand.endManualControl'"
+	sendCommand("deleteEntry",[])
+}
+
 def getidCommand(){
 	log.debug "Executing 'sendCommand.getidCommand'"
 	sendCommand("getid",[])
@@ -439,12 +491,13 @@ def getTempUnitCommand(){
 def autoCommand(){
 	log.debug "Executing 'sendCommand.autoCommand'"
     def initialsetpointtemp
+	def terminationmode = settings.manualmode
     if(device.currentValue("thermostatSetpoint") == 0){
     	initialsetpointtemp = device.currentValue("temperature")
     } else {
     	initialsetpointtemp = device.currentValue("thermostatSetpoint")
     }
-	def jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", temperature:[celsius:initialsetpointtemp], type:"HEATING"], termination:[type:"TADO_MODE"]])
+	def jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", temperature:[celsius:initialsetpointtemp], type:"HEATING"], termination:[type:terminationmode]])
 	sendCommand("temperature",[jsonbody])
 }
 
@@ -454,11 +507,12 @@ def heat(){
 
 def setHeatingTempCommand(targetTemperature){
     def jsonbody
+	def terminationmode = settings.manualmode
  	if (state.tempunit == "C") {
-        	jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", temperature:[celsius:targetTemperature], type:"HEATING"], termination:[type:"TADO_MODE"]])
+        	jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", temperature:[celsius:targetTemperature], type:"HEATING"], termination:[type:terminationmode]])
         }
         else if(state.tempunit == "F"){
-        	jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", temperature:[fahrenheit:targetTemperature], type:"HEATING"], termination:[type:"TADO_MODE"]])
+        	jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", temperature:[fahrenheit:targetTemperature], type:"HEATING"], termination:[type:terminationmode]])
         }
 	log.debug "Executing 'sendCommand.setHeatingTempCommand' to ${targetTemperature}"
 	sendCommand("temperature",[jsonbody])
@@ -466,7 +520,8 @@ def setHeatingTempCommand(targetTemperature){
 
 def offCommand(){
 	log.debug "Executing 'sendCommand.offCommand'"
-    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"OFF", type:"HEATING"], termination:[type:"TADO_MODE"]])
+	def terminationmode = settings.manualmode
+    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"OFF", type:"HEATING"], termination:[type:terminationmode]])
 	sendCommand("temperature",[jsonbody])
 }
 
@@ -476,13 +531,14 @@ def onCommand(){
 
 def heatCommand(){
 	log.debug "Executing 'sendCommand.heatCommand'"
+	def terminationmode = settings.manualmode
     def initialsetpointtemp
     if(device.currentValue("thermostatSetpoint") == 0){
     	initialsetpointtemp = 21
     } else {
     	initialsetpointtemp = device.currentValue("thermostatSetpoint")
     }
-    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", temperature:[celsius:initialsetpointtemp], type:"HEATING"], termination:[type:"TADO_MODE"]])
+    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", temperature:[celsius:initialsetpointtemp], type:"HEATING"], termination:[type:terminationmode]])
 	sendCommand("temperature",[jsonbody])
 }
 
