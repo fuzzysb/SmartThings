@@ -13,6 +13,7 @@
  *	Tado Thermostat
  *
  *	Author: Stuart Buchanan, Based on original work by Ian M with thanks
+ *	Date: 2016-04-05 v2.1 Minor Bug Fixes & improved Icons
  *	Date: 2016-04-05 v2.0 Further Changes to MultiAttribute Tile
  *	Date: 2016-04-05 v1.9 Amended Device Handler Name
  *	Date: 2016-04-05 v1.8 Added all thermostat related capabilities
@@ -96,12 +97,12 @@ metadata {
 		}
         
         standardTile("thermostatMode", "device.thermostatMode", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true) {
-        	state("HEAT", label:'${name}', backgroundColor:"#ea2a2a", icon:"st.Weather.weather14")
-            state("COOL", label:'${name}', backgroundColor:"#089afb", icon:"st.Weather.weather7")
-            state("DRY", label:'${name}', backgroundColor:"#ab7e13", icon:"st.Weather.weather12")
-            state("FAN", label:'${name}', backgroundColor:"#ffffff", icon:"st.Appliances.appliances11")
-            state("AUTO", label:'${name}', backgroundColor:"#62aa12", icon:"st.Electronics.electronics13")
-            state("OFF", label:'${name}', backgroundColor:"#ffffff", icon:"st.switches.switch.off", defaultState: true)  
+        	state("HEAT", label:'${name}', backgroundColor:"#ea2a2a", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/heat_mode_icon.png")
+            state("COOL", label:'${name}', backgroundColor:"#089afb", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/cool_mode_icon.png")
+            state("DRY", label:'${name}', icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/dry_mode_icon.png")
+            state("FAN", label:'${name}', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_mode_icononly.png")
+            state("AUTO", label:'${name}', icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/auto_mode_icon.png")
+            state("OFF", label:'', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/hvac_off.png", defaultState: true)  
 		}
         
 		valueTile("thermostatSetpoint", "device.thermostatSetpoint", width: 2, height: 1, decoration: "flat") {
@@ -121,47 +122,47 @@ metadata {
 		}
        
 		standardTile("thermostatFanMode", "device.thermostatFanMode", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true) {
-        	state("OFF", label:'${name}', backgroundColor:"#ffffff", icon:"st.Appliances.appliances11", defaultState: true)
-            state("AUTO", label:'${name}', backgroundColor:"#ffffff", icon:"st.Appliances.appliances11")
-            state("HIGH", label:'${name}', backgroundColor:"#ffffff", icon:"st.Appliances.appliances11")
-            state("MIDDLE", label:'${name}', backgroundColor:"#ffffff", icon:"st.Appliances.appliances11")
-            state("LOW", label:'${name}', backgroundColor:"#ffffff", icon:"st.Appliances.appliances11")       
+        	state("OFF", label:'', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_off_icon.png", defaultState: true)
+            state("AUTO", label:'', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_auto_icon.png")
+            state("HIGH", label:'', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_high_icon.png")
+            state("MIDDLE", label:'', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_med_icon.png")
+            state("LOW", label:'', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_low_icon.png")       
 		}
 		standardTile("setAuto", "device.thermostat", width: 2, height: 1, decoration: "flat") {
-			state "default", label:"Auto", action:"thermostat.auto"
+			state "default", label:"", action:"thermostat.auto", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/hvac_auto.png"
 		}
         standardTile("setDry", "device.thermostat", width: 2, height: 1, decoration: "flat") {
-			state "default", label:"Dry", action:"dry"
+			state "default", label:"", action:"dry", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/hvac_dry.png"
 		}
         standardTile("setOn", "device.thermostat", width: 2, height: 1, decoration: "flat") {
-			state "default", label:"On", action:"on"
+			state "default", label:"", action:"on", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/hvac_on.png"
 		}
         standardTile("setOff", "device.thermostat", width: 2, height: 1, decoration: "flat") {
-			state "default", label:"Off", action:"thermostat.off"
+			state "default", label:"", action:"thermostat.off", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/hvac_off.png"
 		}
         standardTile("cool", "device.thermostat", width: 2, height: 1, decoration: "flat") {
-			state "default", label:"Cool", action:"thermostat.cool", backgroundColor:"#0683ff"
+			state "default", label:"", action:"thermostat.cool", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/hvac_cool.png"
 		}
         standardTile("heat", "device.thermostat", width: 2, height: 1, decoration: "flat") {
-			state "default", label:"Heat", action:"thermostat.heat", backgroundColor:"#bc2323"
+			state "default", label:"", action:"thermostat.heat", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/hvac_heat.png"
 		}
         standardTile("emergencyHeat", "device.thermostat", width: 2, height: 2, decoration: "flat") {
-			state "default", label:"EMERGENCY\r\nHEAT", action:"thermostat.emergencyHeat", backgroundColor:"#bc2323"
+			state "default", label:"", action:"thermostat.emergencyHeat", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/emergencyHeat.png"
 		}
         standardTile("fan", "device.thermostat", width: 2, height: 1, decoration: "flat") {
-			state "default", label:"Fan", action:"thermostat.fanAuto"
+			state "default", label:"", action:"thermostat.fanAuto", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_mode_icon.png"
 		}
         standardTile("coolingSetpointUp", "device.coolingSetpoint", canChangeIcon: false, decoration: "flat") {
-            state "coolingSetpointUp", label:'  ', action:"coolingSetpointUp", icon:"st.thermostat.thermostat-up", backgroundColor:"#0683ff"
+            state "coolingSetpointUp", label:'  ', action:"coolingSetpointUp", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/cool_arrow_up.png"
         }
 		standardTile("coolingSetpointDown", "device.coolingSetpoint", canChangeIcon: false, decoration: "flat") {
-            state "coolingSetpointDown", label:'  ', action:"coolingSetpointDown", icon:"st.thermostat.thermostat-down", backgroundColor:"#0683ff"
+            state "coolingSetpointDown", label:'  ', action:"coolingSetpointDown", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/cool_arrow_down.png"
         }
 		standardTile("heatingSetpointUp", "device.heatingSetpoint", canChangeIcon: false, decoration: "flat") {
-            state "heatingSetpointUp", label:'  ', action:"heatingSetpointUp", icon:"st.thermostat.thermostat-up", backgroundColor:"#bc2323"
+            state "heatingSetpointUp", label:'  ', action:"heatingSetpointUp", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/heat_arrow_up.png"
         }
         standardTile("heatingSetpointDown", "device.heatingSetpoint", canChangeIcon: false, decoration: "flat") {
-            state "heatingSetpointDown", label:'  ', action:"heatingSetpointDown", icon:"st.thermostat.thermostat-down", backgroundColor:"#bc2323"
+            state "heatingSetpointDown", label:'  ', action:"heatingSetpointDown", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/heat_arrow_down.png"
         }
 		
 		main(["thermostat"])
@@ -725,8 +726,14 @@ def offCommand(){
 }
 
 def onCommand(){
+    def supportedfanspeed
+    if (state.SupportsHeatAutoFanSpeed == "true"){
+    	supportedfanspeed = "AUTO"
+        } else {
+        supportedfanspeed = "HIGH"
+        }  
 	log.debug "Executing 'sendCommand.onCommand'"
-    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:"AUTO", mode:"COOL", power:"ON", temperature:[celsius:21], type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
+    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"COOL", power:"ON", temperature:[celsius:21], type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
 	sendCommand("temperature",[jsonbody])
 }
 
@@ -744,7 +751,7 @@ def coolCommand(){
     } else {
     	initialsetpointtemp = device.currentValue("thermostatSetpoint")
     }
-    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"HEAT", power:"ON", temperature:[celsius:initialsetpointtemp], type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
+    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"COOL", power:"ON", temperature:[celsius:initialsetpointtemp], type:"AIR_CONDITIONING"], termination:[type:"TADO_MODE"]])
 	sendCommand("temperature",[jsonbody])
 }
 
