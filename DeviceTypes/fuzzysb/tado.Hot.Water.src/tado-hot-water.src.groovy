@@ -14,13 +14,15 @@
  *
  *	Author: Stuart Buchanan based on Original Work by Ian M with thanks
  *
- *	2015-12-04	v1.0 Initial release
+ *	Date: 2016-04-05 v1.1 change of default Water Heating Temps can now be defined in device preferences (default Value is 90C). 
+ *	Date: 2016-04-05 v1.0 Initial release
  */
  
 preferences {
 	input("username", "text", title: "Username", description: "Your Tado username")
 	input("password", "password", title: "Password", description: "Your Tado password")
     input("manualmode", "enum", title: "Default Manual Overide Method", options: ["TADO_MODE","MANUAL"], required: false, defaultValue:"TADO_MODE")
+	input("defWaterTemp", "number", title: "Default Water Heating Temperature", required: false, defaultValue: 90)
 }  
  
 metadata {
@@ -495,7 +497,7 @@ def autoCommand(){
 	def terminationmode = settings.manualmode
 	def jsonbody
 	if(state.supportsWaterTempControl == "true"){ 
-		if(device.currentValue("thermostatSetpoint") == 0){
+		if(device.currentValue("thermostatSetpoint") == 0 ){
 			initialsetpointtemp = device.currentValue("temperature")
 		} else {
 			initialsetpointtemp = device.currentValue("thermostatSetpoint")
@@ -547,7 +549,7 @@ def heatCommand(){
     def initialsetpointtemp
 	if(state.supportsWaterTempControl == "true"){ 
 		if(device.currentValue("thermostatSetpoint") == 0){
-			initialsetpointtemp = 21
+			initialsetpointtemp = settings.defWaterTemp
 		} else {
 			initialsetpointtemp = device.currentValue("thermostatSetpoint")
 		}
@@ -564,7 +566,7 @@ def emergencyHeat(){
 	def jsonbody
 	if(state.supportsWaterTempControl == "true"){ 
 	    if(device.currentValue("thermostatSetpoint") == 0){
-			initialsetpointtemp = 90
+			initialsetpointtemp = settings.defWaterTemp
 		} else {
 			initialsetpointtemp = device.currentValue("thermostatSetpoint")
 		}
