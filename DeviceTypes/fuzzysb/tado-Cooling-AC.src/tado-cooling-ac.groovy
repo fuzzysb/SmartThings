@@ -13,6 +13,7 @@
  *	Tado Thermostat
  *
  *	Author: Stuart Buchanan, Based on original work by Ian M with thanks
+ *	Date: 2016-04-05 v2.3 added device preference for default temps for some commands as requested by @mitchell_lu66, also added some additional refreshes and error control for unsupported capabilities
  *	Date: 2016-04-05 v2.2 Added Fan Speed & Emergency Heat (1 Hour) Controls and also a manual Mode End function to fall back to Tado Control. 
  						  Also added preference for how long manual mode runs for either ends at Tado Mode Change (TADO_MODE) or User Control (MANUAL), 
                           please ensure the default method is Set in the device properties
@@ -37,6 +38,8 @@ preferences {
 	input("username", "text", title: "Username", description: "Your Tado username")
 	input("password", "password", title: "Password", description: "Your Tado password")
     input("manualmode", "enum", title: "Default Manual Overide Method", options: ["TADO_MODE","MANUAL"], required: false, defaultValue:"TADO_MODE")
+    input("defHeatingTemp", "number", title: "Default Heating Temperature?", required: false, defaultValue: 21)
+    input("defCoolingTemp", "number", title: "Default Cooling Temperature?", required: false, defaultValue: 21)
 }  
  
 metadata {
@@ -479,25 +482,25 @@ def refresh() {
 def auto() {
 	log.debug "Executing 'auto'"
 	autoCommand()
-    refresh()
+    statusCommand()
 }
 
 def on() {
 	log.debug "Executing 'on'"
 	onCommand()
-    refresh()
+    statusCommand()
 }
 
 def off() {
 	log.debug "Executing 'off'"
 	offCommand()
-    refresh()
+    statusCommand()
 }
 
 def dry() {
 	log.debug "Executing 'dry'"
 	dryCommand()
-    refresh()
+    statusCommand()
 }
 
 def setThermostatMode(requiredMode){
@@ -528,24 +531,36 @@ def setHeatingSetpoint(targetTemperature) {
 }
 
 def heatingSetpointUp(){
-	log.debug "Current SetPoint Is " + (device.currentValue("thermostatSetpoint")).toString()
-    if ((device.currentValue("thermostatSetpoint").toInteger() - 1 ) < state.MinHeatTemp){
-    	log.debug("cannot decrease heat setpoint, its already at the minimum level of " + state.MinHeatTemp)
+	def capabilitysupported = state.supportsHeat
+    if (capabilitysupported == "true"){
+		log.debug "Current SetPoint Is " + (device.currentValue("thermostatSetpoint")).toString()
+    	if ((device.currentValue("thermostatSetpoint").toInteger() - 1 ) < state.MinHeatTemp){
+    		log.debug("cannot decrease heat setpoint, its already at the minimum level of " + state.MinHeatTemp)
+    	} else {
+			int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() + 1
+			log.debug "Setting heatingSetpoint up to: ${newSetpoint}"
+			setHeatingSetpoint(newSetpoint)
+        	statusCommand()
+    	}
     } else {
-		int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() + 1
-		log.debug "Setting heatingSetpoint up to: ${newSetpoint}"
-		setHeatingSetpoint(newSetpoint)
+    	log.debug("Sorry Heat Capability not supported by your HVAC Device")
     }
 }
 
 def heatingSetpointDown(){
-	log.debug "Current SetPoint Is " + (device.currentValue("thermostatSetpoint")).toString()
-    if ((device.currentValue("thermostatSetpoint").toInteger() + 1 ) > state.MaxHeatTemp){
-    	log.debug("cannot increase heat setpoint, its already at the maximum level of " + state.MaxHeatTemp)
+	def capabilitysupported = state.supportsHeat
+    if (capabilitysupported == "true"){
+		log.debug "Current SetPoint Is " + (device.currentValue("thermostatSetpoint")).toString()
+    	if ((device.currentValue("thermostatSetpoint").toInteger() + 1 ) > state.MaxHeatTemp){
+    		log.debug("cannot increase heat setpoint, its already at the maximum level of " + state.MaxHeatTemp)
+    	} else {
+			int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() - 1
+			log.debug "Setting heatingSetpoint down to: ${newSetpoint}"
+			setHeatingSetpoint(newSetpoint)
+        	statusCommand()
+    	}
     } else {
-		int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() - 1
-		log.debug "Setting heatingSetpoint down to: ${newSetpoint}"
-		setHeatingSetpoint(newSetpoint)
+    	log.debug("Sorry Heat Capability not supported by your HVAC Device")
     }
 }
 
@@ -557,24 +572,36 @@ def setCoolingSetpoint(targetTemperature) {
 }
 
 def coolingSetpointUp(){
-	log.debug "Current SetPoint Is " + (device.currentValue("thermostatSetpoint")).toString()
-    if ((device.currentValue("thermostatSetpoint").toInteger() + 1 ) > state.MaxCoolTemp){
-    	log.debug("cannot increase cool setpoint, its already at the maximum level of " + state.MaxCoolTemp)
+	def capabilitysupported = state.supportsCool
+    if (capabilitysupported == "true"){
+		log.debug "Current SetPoint Is " + (device.currentValue("thermostatSetpoint")).toString()
+    	if ((device.currentValue("thermostatSetpoint").toInteger() + 1 ) > state.MaxCoolTemp){
+    		log.debug("cannot increase cool setpoint, its already at the maximum level of " + state.MaxCoolTemp)
+    	} else {
+			int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() + 1
+			log.debug "Setting coolingSetpoint up to: ${newSetpoint}"
+			setCoolingSetpoint(newSetpoint)
+        	statusCommand()
+    	}
     } else {
-		int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() + 1
-		log.debug "Setting coolingSetpoint up to: ${newSetpoint}"
-		setCoolingSetpoint(newSetpoint)
+    	log.debug("Sorry Cool Capability not supported by your HVAC Device")
     }
 }
 
 def coolingSetpointDown(){
-	log.debug "Current SetPoint Is " + (device.currentValue("thermostatSetpoint")).toString()
-    if ((device.currentValue("thermostatSetpoint").toInteger() - 1 ) < state.MinCoolTemp){
-    	log.debug("cannot decrease cool setpoint, its already at the minimum level of " + state.MinCoolTemp)
+	def capabilitysupported = state.supportsCool
+    if (capabilitysupported == "true"){
+		log.debug "Current SetPoint Is " + (device.currentValue("thermostatSetpoint")).toString()
+    	if ((device.currentValue("thermostatSetpoint").toInteger() - 1 ) < state.MinCoolTemp){
+    		log.debug("cannot decrease cool setpoint, its already at the minimum level of " + state.MinCoolTemp)
+    	} else {
+			int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() - 1
+			log.debug "Setting coolingSetpoint down to: ${newSetpoint}"
+			setCoolingSetpoint(newSetpoint)
+        	statusCommand()
+    	}
     } else {
-		int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() - 1
-		log.debug "Setting coolingSetpoint down to: ${newSetpoint}"
-		setCoolingSetpoint(newSetpoint)
+    	log.debug("Sorry Cool Capability not supported by your HVAC Device")
     }
 }
 
@@ -688,24 +715,42 @@ def getTempUnitCommand(){
 }
 
 def autoCommand(){
-	log.debug "Executing 'sendCommand.autoCommand'"
-    def terminationmode = settings.manualmode
-	def jsonbody = new groovy.json.JsonOutput().toJson([setting:[mode:"AUTO", power:"ON", type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
-	sendCommand("temperature",[jsonbody])
+    def capabilitysupported = state.supportsAuto
+    if (capabilitysupported == "true"){
+		log.debug "Executing 'sendCommand.autoCommand'"
+    	def terminationmode = settings.manualmode
+		def jsonbody = new groovy.json.JsonOutput().toJson([setting:[mode:"AUTO", power:"ON", type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
+		sendCommand("temperature",[jsonbody])
+    	statusCommand()
+    } else {
+    	log.debug("Sorry Auto Capability not supported by your HVAC Device")
+    }
 }
 
 def dryCommand(){
-	def terminationmode = settings.manualmode
-	log.debug "Executing 'sendCommand.dryCommand'"
-    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[mode:"DRY", power:"ON", type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
-	sendCommand("temperature",[jsonbody])
+    def capabilitysupported = state.supportsDry
+    if (capabilitysupported == "true"){
+		def terminationmode = settings.manualmode
+		log.debug "Executing 'sendCommand.dryCommand'"
+    	def jsonbody = new groovy.json.JsonOutput().toJson([setting:[mode:"DRY", power:"ON", type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
+		sendCommand("temperature",[jsonbody])
+    	statusCommand()
+    } else {
+    	log.debug("Sorry Dry Capability not supported by your HVAC Device")
+    }
 }
 
 def fanAuto(){
-	def terminationmode = settings.manualmode
-	log.debug "Executing 'sendCommand.fanAutoCommand'"
-    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[mode:"FAN", power:"ON", type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
-	sendCommand("temperature",[jsonbody])
+    def capabilitysupported = state.supportsFan
+    if (capabilitysupported == "true"){
+		def terminationmode = settings.manualmode
+		log.debug "Executing 'sendCommand.fanAutoCommand'"
+    	def jsonbody = new groovy.json.JsonOutput().toJson([setting:[mode:"FAN", power:"ON", type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
+		sendCommand("temperature",[jsonbody])
+    	statusCommand()
+	} else {
+    	log.debug("Sorry Fan Capability not supported by your HVAC Device")
+    }
 }
 
 def fanOn(){
@@ -717,17 +762,30 @@ def fanCirculate(){
 }
 
 def cool(){
-	coolCommand()
+	def capabilitysupported = state.supportsCool
+    if (capabilitysupported == "true"){
+		coolCommand()
+    	statusCommand()
+	} else {
+    	log.debug("Sorry Cool Capability not supported by your HVAC Device")
+    }
 }
 
 def heat(){
-	heatCommand()
+	def capabilitysupported = state.supportsHeat
+    if (capabilitysupported == "true"){
+		heatCommand()
+        statusCommand()
+    } else {
+    	log.debug("Sorry Heat Capability not supported by your HVAC Device")
+    }
 }
 
 
 def endManualControl(){
 	log.debug "Executing 'sendCommand.endManualControl'"
 	sendCommand("deleteEntry",[])
+    statusCommand()
 }
 
 
@@ -751,6 +809,7 @@ def fanSpeedAuto(){
         }
 		log.debug "Executing 'sendCommand.fanSpeedAuto' to ${supportedfanspeed}"
 		sendCommand("temperature",[jsonbody])
+        statusCommand()
 	}
 }
 
@@ -769,6 +828,7 @@ def fanSpeedHigh(){
         }
 		log.debug "Executing 'sendCommand.fanSpeedAuto' to ${supportedfanspeed}"
 		sendCommand("temperature",[jsonbody])
+        statusCommand()
 	}
 }
 
@@ -787,6 +847,7 @@ def fanSpeedMid(){
         }
 		log.debug "Executing 'sendCommand.fanSpeedMid' to ${supportedfanspeed}"
 		sendCommand("temperature",[jsonbody])
+        statusCommand()
 	}
 }
 
@@ -805,6 +866,7 @@ def fanSpeedLow(){
         }
 		log.debug "Executing 'sendCommand.fanSpeedLow' to ${supportedfanspeed}"
 		sendCommand("temperature",[jsonbody])
+        statusCommand()
 	}
 }
 
@@ -856,13 +918,14 @@ def offCommand(){
 def onCommand(){
 	def terminationmode = settings.manualmode
     def supportedfanspeed
+    def initialsetpointtemp = settings.defCoolingTemp
     if (state.SupportsHeatAutoFanSpeed == "true"){
     	supportedfanspeed = "AUTO"
         } else {
         supportedfanspeed = "HIGH"
         }  
 	log.debug "Executing 'sendCommand.onCommand'"
-    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"COOL", power:"ON", temperature:[celsius:21], type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
+    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"COOL", power:"ON", temperature:[celsius:initialsetpointtemp], type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
 	sendCommand("temperature",[jsonbody])
 }
 
@@ -877,7 +940,7 @@ def coolCommand(){
         supportedfanspeed = "HIGH"
         }  
     if(device.currentValue("thermostatSetpoint") == 0){
-    	initialsetpointtemp = 21
+    	initialsetpointtemp = settings.defCoolingTemp
     } else {
     	initialsetpointtemp = device.currentValue("thermostatSetpoint")
     }
@@ -896,7 +959,7 @@ def heatCommand(){
         supportedfanspeed = "HIGH"
         }  
     if(device.currentValue("thermostatSetpoint") == 0){
-    	initialsetpointtemp = 21
+    	initialsetpointtemp = settings.defHeatingTemp
     } else {
     	initialsetpointtemp = device.currentValue("thermostatSetpoint")
     }
@@ -906,20 +969,26 @@ def heatCommand(){
 
 def emergencyHeat(){
 	log.debug "Executing 'sendCommand.heatCommand'"
-    def initialsetpointtemp
-    def supportedfanspeed
-    if (state.SupportsHeatAutoFanSpeed == "true"){
-    	supportedfanspeed = "AUTO"
-        } else {
-        supportedfanspeed = "HIGH"
-        }  
-    if(device.currentValue("thermostatSetpoint") == 0){
-    	initialsetpointtemp = 23
-    } else {
-    	initialsetpointtemp = device.currentValue("thermostatSetpoint")
+    def capabilitysupported = state.supportsHeat
+    if (capabilitysupported == "true"){
+	    def initialsetpointtemp
+    	def supportedfanspeed
+    	if (state.SupportsHeatAutoFanSpeed == "true"){
+    		supportedfanspeed = "AUTO"
+     	   } else {
+     	   	supportedfanspeed = "HIGH"
+     	   }  
+    	if(device.currentValue("thermostatSetpoint") == 0){
+    		initialsetpointtemp = settings.defHeatingTemp
+    	} else {
+    		initialsetpointtemp = device.currentValue("thermostatSetpoint")
+    	}
+    	def jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"HEAT", power:"ON", temperature:[celsius:initialsetpointtemp], type:"AIR_CONDITIONING"], termination:[durationInSeconds:"3600", type:"TIMER"]])
+		sendCommand("temperature",[jsonbody])
+    	statusCommand()
+	} else {
+    	log.debug("Sorry Heat Capability not supported by your HVAC Device")
     }
-    def jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:"HEAT", power:"ON", temperature:[celsius:initialsetpointtemp], type:"AIR_CONDITIONING"], termination:[durationInSeconds:"3600", type:"TIMER"]])
-	sendCommand("temperature",[jsonbody])
 }
 
 def statusCommand(){
