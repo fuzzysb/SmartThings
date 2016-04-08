@@ -13,6 +13,7 @@
  *	Tado Thermostat
  *
  *	Author: Stuart Buchanan, Based on original work by Ian M with thanks
+ *	Date: 2016-04-05 v2.4 Performed Testing with Thermostat Mode Director and found some deficiencies where this would not work correctly. i have now corrected, this now works fine and has been tested.
  *	Date: 2016-04-05 v2.3 added device preference for default temps for some commands as requested by @mitchell_lu66, also added some additional refreshes and error control for unsupported capabilities
  *	Date: 2016-04-05 v2.2 Added Fan Speed & Emergency Heat (1 Hour) Controls and also a manual Mode End function to fall back to Tado Control. 
  						  Also added preference for how long manual mode runs for either ends at Tado Mode Change (TADO_MODE) or User Control (MANUAL), 
@@ -277,6 +278,9 @@ private parseResponse(resp) {
        		ACMode = resp.data.setting.mode
 			log.debug("thermostatMode: " + ACMode)
 			ACFanSpeed = resp.data.setting.fanSpeed
+			if (ACFanSpeed == null) {
+			ACFanSpeed = "--"
+			}
         	log.debug("Read thermostatFanMode: " + ACFanSpeed)
         if (ACMode == "DRY" || ACMode == "AUTO" || ACMode == "FAN"){
         	thermostatSetpoint = "--"
@@ -505,23 +509,46 @@ def dry() {
 
 def setThermostatMode(requiredMode){
 	switch (requiredMode) {
-    	case "DRY":
+    	case "dry":
         	dry()
         break
-    	case "HEAT":
+    	case "heat":
         	heat()
         break
-        case "COOL":
+        case "cool":
         	cool()
         break
-        case "AUTO":
+        case "auto":
         	auto()
         break
-        case "FAN":
+        case "fan":
+        	fanAuto()
+        break
+		case "off":
+        	off()
+        break
+		case "emergency heat":
+        	emergencyHeat()
+        break
+     }
+}
+
+def thermostatFanMode(requiredMode){
+	switch (requiredMode) {
+    	case "auto":
+        	fanAuto()
+        break
+    	case "on":
+        	fanAuto()
+        break
+        case "circulate":
         	fanAuto()
         break
      }
 }
+
+
+
 
 def setHeatingSetpoint(targetTemperature) {
 	log.debug "Executing 'setHeatingSetpoint'"
