@@ -116,7 +116,7 @@ def updated(){
 	def cmds = [
 	getidCommand(),
 	getTempUnitCommand(),
-	getCapabilitiesCommand()
+	getCapabilitiesCommand(),
 	refresh()
 	]
 	delayBetween(cmds, 2000)
