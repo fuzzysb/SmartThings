@@ -15,6 +15,7 @@
  *	Author: Stuart Buchanan based on Original Work by Ian M with thanks
  *
  *	Updates: 
+ *  2016-04-08 	v1.6 added statusCommand calls to refresh more frequently, also improved compatibility with Rule Machine and Thermostat Mode Director in addition also added default heating temperature where you can set the default temperature for the mode commands.
  *  2016-04-05 	v1.5 added improved icons and also a manual Mode End function to fall back to Tado Control. 
  				Also added preference for how long manual mode runs for either ends at Tado Mode Change (TADO_MODE) or User Control (MANUAL), 
                 please ensure the default method is Set in the device properties
@@ -29,6 +30,7 @@ preferences {
 	input("username", "text", title: "Username", description: "Your Tado username")
 	input("password", "password", title: "Password", description: "Your Tado password")
     input("manualmode", "enum", title: "Default Manual Overide Method", options: ["TADO_MODE","MANUAL"], required: false, defaultValue:"TADO_MODE")
+	input("defHeatingTemp", "number", title: "Default Heating Temperature?", required: false, defaultValue: 21)
 }  
  
 metadata {
@@ -126,7 +128,8 @@ def updated(){
 	def cmds = [
 	getidCommand(),
 	getTempUnitCommand(),
-	getCapabilitiesCommand()
+	getCapabilitiesCommand(),
+	refresh()
 	]
 	delayBetween(cmds, 2000)
 }
@@ -155,26 +158,43 @@ def refresh() {
 def auto() {
 	log.debug "Executing 'auto'"
 	autoCommand()
-    refresh()
+    statusCommand()
 }
 
 def on() {
 	log.debug "Executing 'on'"
 	onCommand()
-    refresh()
+    statusCommand()
 }
 
 def off() {
 	log.debug "Executing 'off'"
 	offCommand()
-    refresh()
+    statusCommand()
 }
 
 def setHeatingSetpoint(targetTemperature) {
 	log.debug "Executing 'setHeatingSetpoint'"
     log.debug "Target Temperature ${targetTemperature}"
     setHeatingTempCommand(targetTemperature)
-	refresh()
+	statusCommand()
+}
+
+def setThermostatMode(requiredMode){
+	switch (requiredMode) {
+    	case "heat":
+        	heat()
+        break
+        case "auto":
+        	auto()
+        break
+		case "off":
+        	off()
+        break
+		case "emergency heat":
+        	emergencyHeat()
+        break
+     }
 }
 
 def heatingSetpointUp(){
@@ -471,6 +491,7 @@ private sendCommand(method, args = []) {
 def endManualControl(){
 	log.debug "Executing 'sendCommand.endManualControl'"
 	sendCommand("deleteEntry",[])
+	statusCommand()
 }
 
 def getidCommand(){
@@ -499,10 +520,12 @@ def autoCommand(){
     }
 	def jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", temperature:[celsius:initialsetpointtemp], type:"HEATING"], termination:[type:terminationmode]])
 	sendCommand("temperature",[jsonbody])
+	statusCommand()
 }
 
 def heat(){
 	heatCommand()
+	statusCommand()
 }
 
 def setHeatingTempCommand(targetTemperature){
@@ -523,10 +546,14 @@ def offCommand(){
 	def terminationmode = settings.manualmode
     def jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"OFF", type:"HEATING"], termination:[type:terminationmode]])
 	sendCommand("temperature",[jsonbody])
+	statusCommand()
 }
+
+
 
 def onCommand(){
 	heatCommand()
+	statusCommand()
 }
 
 def heatCommand(){
@@ -534,7 +561,7 @@ def heatCommand(){
 	def terminationmode = settings.manualmode
     def initialsetpointtemp
     if(device.currentValue("thermostatSetpoint") == 0){
-    	initialsetpointtemp = 21
+    	initialsetpointtemp = settings.defHeatingTemp
     } else {
     	initialsetpointtemp = device.currentValue("thermostatSetpoint")
     }
@@ -546,12 +573,13 @@ def emergencyHeat(){
 	log.debug "Executing 'sendCommand.heatCommand'"
     def initialsetpointtemp
     if(device.currentValue("thermostatSetpoint") == 0){
-    	initialsetpointtemp = 23
+    	initialsetpointtemp = settings.defHeatingTemp
     } else {
     	initialsetpointtemp = device.currentValue("thermostatSetpoint")
     }
     def jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", temperature:[celsius:initialsetpointtemp], type:"HEATING"], termination:[durationInSeconds:"3600", type:"TIMER"]])
 	sendCommand("temperature",[jsonbody])
+	statusCommand()
 }
 
 def statusCommand(){
