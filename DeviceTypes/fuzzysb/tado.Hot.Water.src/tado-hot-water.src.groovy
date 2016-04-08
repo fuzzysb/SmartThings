@@ -13,7 +13,7 @@
  *	Tado Thermostat
  *
  *	Author: Stuart Buchanan based on Original Work by Ian M with thanks
- *
+ * 	Date: 2016-04-08 v1.2 added setThermostatMode(mode) function to work better with Rule Machine and Thermostat Mode Director
  *	Date: 2016-04-05 v1.1 change of default Water Heating Temps can now be defined in device preferences (default Value is 90C). 
  *	Date: 2016-04-05 v1.0 Initial release
  */
@@ -117,6 +117,7 @@ def updated(){
 	getidCommand(),
 	getTempUnitCommand(),
 	getCapabilitiesCommand()
+	refresh()
 	]
 	delayBetween(cmds, 2000)
 }
@@ -145,26 +146,26 @@ def refresh() {
 def auto() {
 	log.debug "Executing 'auto'"
 	autoCommand()
-    refresh()
+    statusCommand()
 }
 
 def on() {
 	log.debug "Executing 'on'"
 	onCommand()
-    refresh()
+    statusCommand()
 }
 
 def off() {
 	log.debug "Executing 'off'"
 	offCommand()
-    refresh()
+    statusCommand()
 }
 
 def setHeatingSetpoint(targetTemperature) {
 	log.debug "Executing 'setHeatingSetpoint'"
     log.debug "Target Temperature ${targetTemperature}"
     setHeatingTempCommand(targetTemperature)
-	refresh()
+	statusCommand()
 }
 
 def heatingSetpointUp(){
@@ -176,6 +177,7 @@ def heatingSetpointUp(){
 			int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() + 1
 			log.debug "Setting heatingSetpoint up to: ${newSetpoint}"
 			setHeatingSetpoint(newSetpoint)
+			statusCommand()
 		}
 	} else {
 		log.debug "Hot Water Temperature Capability Not Supported"
@@ -191,6 +193,7 @@ def heatingSetpointDown(){
 			int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() - 1
 			log.debug "Setting heatingSetpoint down to: ${newSetpoint}"
 			setHeatingSetpoint(newSetpoint)
+			statusCommand()
 		}
 	} else {
 		log.debug "Hot Water Temperature Capability Not Supported"
@@ -474,6 +477,7 @@ private sendCommand(method, args = []) {
 def endManualControl(){
 	log.debug "Executing 'sendCommand.endManualControl'"
 	sendCommand("deleteEntry",[])
+	statusCommand()
 }
 
 def getidCommand(){
@@ -489,6 +493,23 @@ def getCapabilitiesCommand(){
 def getTempUnitCommand(){
 	log.debug "Executing 'sendCommand.getidCommand'"
 	sendCommand("gettempunit",[])
+}
+
+def setThermostatMode(requiredMode){
+	switch (requiredMode) {
+    	case "heat":
+        	heat()
+        break
+        case "auto":
+        	auto()
+        break
+		case "off":
+        	off()
+        break
+		case "emergency heat":
+        	emergencyHeat()
+        break
+     }
 }
 
 def autoCommand(){
@@ -575,7 +596,7 @@ def emergencyHeat(){
 		jsonbody = new groovy.json.JsonOutput().toJson([setting:[power:"ON", type:"HOT_WATER"], termination:[durationInSeconds:"3600", type:"TIMER"]])
 	}
 	sendCommand("temperature",[jsonbody])
-	refresh()
+	statusCommand()
 }
 
 def statusCommand(){
