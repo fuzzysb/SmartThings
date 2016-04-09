@@ -13,6 +13,7 @@
  *	Tado Thermostat
  *
  *	Author: Stuart Buchanan, Based on original work by Ian M with thanks
+ *	Date: 2016-04-09 v2.5 Major bug fix exercise, found lots and lots and lots.....now 100% conforms to ST Thermostat capability. main panel now shows colour of operating state. new attributes tadoMode and tadoFanSpeed created.
  *	Date: 2016-04-05 v2.4 Performed Testing with Thermostat Mode Director and found some deficiencies where this would not work correctly. i have now corrected, this now works fine and has been tested.
  *	Date: 2016-04-05 v2.3 added device preference for default temps for some commands as requested by @mitchell_lu66, also added some additional refreshes and error control for unsupported capabilities
  *	Date: 2016-04-05 v2.2 Added Fan Speed & Emergency Heat (1 Hour) Controls and also a manual Mode End function to fall back to Tado Control. 
@@ -58,6 +59,10 @@ metadata {
 		capability "Polling"
 		capability "Refresh"
         
+        attribute "tadoMode", "string"
+        attribute "tadoFanSpeed", "string"
+        command "temperatureUp"
+        command "temperatureDown"
         command "heatingSetpointUp"
         command "heatingSetpointDown"
         command "coolingSetpointUp"
@@ -85,19 +90,41 @@ metadata {
 			tileAttribute("device.temperature", key:"PRIMARY_CONTROL", canChangeIcon: true, canChangeBackground: true){
             	attributeState "default", label:'${currentValue}°', backgroundColor:"#fab907", icon:"st.Home.home1"
             }
+            tileAttribute("device.temperature", key: "VALUE_CONTROL") {
+    			attributeState("VALUE_UP", action: "temperatureUp")
+    			attributeState("VALUE_DOWN", action: "temperatureDown")
+  			}
 			tileAttribute("device.humidity", key: "SECONDARY_CONTROL") {
     			attributeState("default", label:'${currentValue}%', unit:"%")
   			}
             tileAttribute("device.thermostatOperatingState", key: "OPERATING_STATE") {
-    			attributeState("SLEEP", label:'${name}', backgroundColor:"#0164a8")
-    			attributeState("HOME", label:'${name}', backgroundColor:"#fab907")
-    			attributeState("AWAY", label:'${name}', backgroundColor:"#62aa12")
-                attributeState("OFF", label:'${name}', backgroundColor:"#c0c0c0")
-                attributeState("MANUAL", label:'${name}', backgroundColor:"#804000")
-		}
+    			attributeState("idle", backgroundColor:"#666666")
+    			attributeState("heating", backgroundColor:"#ff471a")
+    			attributeState("cooling", backgroundColor:"#1a75ff")
+                attributeState("emergency heat", backgroundColor:"#ff471a")
+                attributeState("drying", backgroundColor:"#c68c53")
+                attributeState("fanning", backgroundColor:"#39e600")
+                attributeState("heating|cooling", backgroundColor:"#ff9900")
+  			}
+            tileAttribute("device.thermostatMode", key: "THERMOSTAT_MODE") {
+    			attributeState("off", label:'${name}')
+    			attributeState("heat", label:'${name}')
+    			attributeState("cool", label:'${name}')
+    			attributeState("auto", label:'${name}')
+            	attributeState("fan", label:'${name}')
+           		attributeState("dry", label:'${name}')
+  			}
+            tileAttribute("device.heatingSetpoint", key: "HEATING_SETPOINT") {
+    			attributeState("default", label:'${currentValue}', unit:"dF")
+  			}
+  			tileAttribute("device.coolingSetpoint", key: "COOLING_SETPOINT") {
+    			attributeState("default", label:'${currentValue}', unit:"dF")
+  			}
+        
+        
  	}
         
-        standardTile("thermostatOperatingState", "device.thermostatOperatingState", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true) {         
+        standardTile("tadoMode", "device.tadoMode", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true) {         
 			state("SLEEP", label:'${name}', backgroundColor:"#0164a8", icon:"st.Bedroom.bedroom2")
             state("HOME", label:'${name}', backgroundColor:"#fab907", icon:"st.Home.home2")
             state("AWAY", label:'${name}', backgroundColor:"#62aa12", icon:"st.Outdoor.outdoor18")
@@ -110,12 +137,13 @@ metadata {
 		}
         
         standardTile("thermostatMode", "device.thermostatMode", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true) {
-        	state("HEAT", label:'${name}', backgroundColor:"#ea2a2a", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/heat_mode_icon.png")
-            state("COOL", label:'${name}', backgroundColor:"#089afb", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/cool_mode_icon.png")
-            state("DRY", label:'${name}', icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/dry_mode_icon.png")
-            state("FAN", label:'${name}', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_mode_icononly.png")
-            state("AUTO", label:'${name}', icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/auto_mode_icon.png")
-            state("OFF", label:'', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/hvac_off.png", defaultState: true)  
+        	state("heat", label:'HEAT', backgroundColor:"#ea2a2a", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/heat_mode_icon.png")
+            state("emergency heat", label:'HEAT', backgroundColor:"#ea2a2a", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/heat_mode_icon.png")
+            state("cool", label:'COOL', backgroundColor:"#089afb", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/cool_mode_icon.png")
+            state("dry", label:'DRY', icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/dry_mode_icon.png")
+            state("fan", label:'FAN', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_mode_icononly.png")
+            state("auto", label:'AUTO', icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/auto_mode_icon.png")
+            state("off", label:'', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/hvac_off.png", defaultState: true)  
 		}
         
 		valueTile("thermostatSetpoint", "device.thermostatSetpoint", width: 2, height: 1, decoration: "flat") {
@@ -134,7 +162,7 @@ metadata {
 			state "outsidetemperature", label: 'Outside Temp\r\n${currentValue}°'
 		}
        
-		standardTile("thermostatFanMode", "device.thermostatFanMode", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true) {
+		standardTile("tadoFanSpeed", "device.tadoFanSpeed", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true) {
         	state("OFF", label:'', icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_off_icon.png", defaultState: true)
             state("AUTO", label:'', icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_auto_icon.png")
             state("HIGH", label:'', icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_high_icon.png")
@@ -177,16 +205,16 @@ metadata {
         standardTile("heatingSetpointDown", "device.heatingSetpoint", canChangeIcon: false, decoration: "flat") {
             state "heatingSetpointDown", label:'  ', action:"heatingSetpointDown", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/heat_arrow_down.png"
         }
-		standardTile("SetFanSpeedAuto", "device.thermostatFanMode", width: 2, height: 1, canChangeIcon: true, canChangeBackground: true, decoration: "flat") {
+		standardTile("SetFanSpeedAuto", "device.tadoFanSpeed", width: 2, height: 1, canChangeIcon: true, canChangeBackground: true, decoration: "flat") {
             state("AUTO", label:'', action:"fanSpeedAuto",  icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_auto_icon.png")
         }
-        standardTile("SetFanSpeedHigh", "device.thermostatFanMode", width: 2, height: 1, canChangeIcon: true, canChangeBackground: true, decoration: "flat") {
+        standardTile("SetFanSpeedHigh", "device.tadoFanSpeed", width: 2, height: 1, canChangeIcon: true, canChangeBackground: true, decoration: "flat") {
             state("AUTO", label:'', action:"fanSpeedHigh",  icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_high_icon.png")
         }
-        standardTile("SetFanSpeedMid", "device.thermostatFanMode", width: 2, height: 1, canChangeIcon: true, canChangeBackground: true, decoration: "flat") {
+        standardTile("SetFanSpeedMid", "device.tadoFanSpeed", width: 2, height: 1, canChangeIcon: true, canChangeBackground: true, decoration: "flat") {
             state("AUTO", label:'', action:"fanSpeedMid",  icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_med_icon.png")
         }
-        standardTile("SetFanSpeedLow", "device.thermostatFanMode", width: 2, height: 1, canChangeIcon: true, canChangeBackground: true, decoration: "flat") {
+        standardTile("SetFanSpeedLow", "device.tadoFanSpeed", width: 2, height: 1, canChangeIcon: true, canChangeBackground: true, decoration: "flat") {
             state("AUTO", label:'', action:"fanSpeedLow",  icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_low_icon.png")
         }
 		standardTile("endManualControl", "device.thermostat", width: 2, height: 1, canChangeIcon: false, canChangeBackground: true, decoration: "flat") {
@@ -194,7 +222,7 @@ metadata {
 		}
 		
 		main(["thermostat"])
-		details(["thermostat","thermostatMode","coolingSetpointUp","coolingSetpointDown","autoOperation","heatingSetpointUp","heatingSetpointDown","outsidetemperature","thermostatSetpoint","thermostatOperatingState","refresh","thermostatFanMode","setAuto","setOn","setOff","fan","cool","heat","setDry","SetFanSpeedAuto","emergencyHeat","endManualControl","SetFanSpeedLow","SetFanSpeedMid","SetFanSpeedHigh"])
+		details(["thermostat","thermostatMode","coolingSetpointUp","coolingSetpointDown","autoOperation","heatingSetpointUp","heatingSetpointDown","outsidetemperature","thermostatSetpoint","tadoMode","refresh","tadoFanSpeed","setAuto","setOn","setOff","fan","cool","heat","setDry","SetFanSpeedAuto","emergencyHeat","endManualControl","SetFanSpeedLow","SetFanSpeedMid","SetFanSpeedHigh"])
 	}
 }
 
@@ -230,7 +258,9 @@ private parseResponse(resp) {
 	def humidityUnit = "%"
     def ACMode
     def ACFanSpeed
+    def ACFanMode = "off"
     def thermostatSetpoint
+    def tOperatingState
     if(resp.status == 200) {
         log.debug("Executing parseResponse.successTrue")
         def temperature
@@ -252,8 +282,8 @@ private parseResponse(resp) {
         }else if(resp.data.overlayType == "MANUAL"){
         	autoOperation = "MANUAL"
         }
-        log.debug("Read thermostatOperatingState: " + autoOperation)
-        sendEvent(name: 'thermostatOperatingState', value: autoOperation)
+        log.debug("Read tadoMode: " + autoOperation)
+        sendEvent(name: 'tadoMode', value: autoOperation)
         log.debug("Send thermostatMode Event Fired")
 
         def humidity 
@@ -267,23 +297,53 @@ private parseResponse(resp) {
         sendEvent(name: 'humidity', value: humidity,unit: humidityUnit)
 
     	if (resp.data.setting.power == "OFF"){
-       		ACMode = "OFF"
+            tOperatingState = "idle"
+       		ACMode = "off"
+            ACFanMode = "off"
         	log.debug("Read thermostatMode: " + ACMode)
 			ACFanSpeed = "OFF"
-        	log.debug("Read thermostatFanMode: " + ACFanSpeed)
-			thermostatSetpoint = "0"
+        	log.debug("Read tadoFanSpeed: " + ACFanSpeed)
+			thermostatSetpoint = 0
         	log.debug("Read thermostatSetpoint: " + thermostatSetpoint)
     	}
    	 	else if (resp.data.setting.power == "ON"){
-       		ACMode = resp.data.setting.mode
+       		ACMode = (resp.data.setting.mode).toLowerCase()
 			log.debug("thermostatMode: " + ACMode)
 			ACFanSpeed = resp.data.setting.fanSpeed
 			if (ACFanSpeed == null) {
-			ACFanSpeed = "--"
+				ACFanSpeed = "--"
+            }
+            if (resp.data.overlay.termination.type == "TIMER" && resp.data.overlay.termination.durationInSeconds == "3600"){ 
+            	ACMode = "emergency heat"
+                log.debug("thermostatMode is heat, however duration shows the state is: " + ACMode)
+            }
+            switch (ACMode) {
+    			case "heat":
+        			tOperatingState = "heating"
+        		break
+    			case "emergency heat":
+        			tOperatingState = "heating"
+        		break
+        		case "cool":
+        			tOperatingState = "cooling"
+        		break
+                case "dry":
+        			tOperatingState = "drying"
+        		break
+                case "fan":
+        			tOperatingState = "fanning"
+        		break
+                case "auto":
+        			tOperatingState = "heating|cooling"
+        		break
 			}
-        	log.debug("Read thermostatFanMode: " + ACFanSpeed)
-        if (ACMode == "DRY" || ACMode == "AUTO" || ACMode == "FAN"){
+            log.debug("Read thermostatOperatingState: " + tOperatingState)
+        	log.debug("Read tadoFanSpeed: " + ACFanSpeed)
+        
+        if (ACMode == "dry" || ACMode == "auto" || ACMode == "fan"){
         	thermostatSetpoint = "--"
+        }else if(ACMode == "fan") {
+        	ACFanMode = "auto"      
         }else{
        		if (temperatureUnit == "C") {
         		thermostatSetpoint = Math.round(resp.data.setting.temperature.celsius)
@@ -293,13 +353,15 @@ private parseResponse(resp) {
         	}
         }
         log.debug("Read thermostatSetpoint: " + thermostatSetpoint)
-    	}
-	}	
-
-	else{
+      }
+    }else{
         log.debug("Executing parseResponse.successFalse")
     }
-    sendEvent(name: 'thermostatFanMode', value: ACFanSpeed)
+    sendEvent(name: 'thermostatOperatingState', value: tOperatingState)
+    log.debug("Send thermostatOperatingState Event Fired")
+	sendEvent(name: 'tadoFanSpeed', value: ACFanSpeed)
+    log.debug("Send tadoFanSpeed Event Fired")
+    sendEvent(name: 'thermostatFanMode', value: ACFanMode)
     log.debug("Send thermostatFanMode Event Fired")
 	sendEvent(name: 'thermostatMode', value: ACMode)
     log.debug("Send thermostatMode Event Fired")
@@ -309,7 +371,6 @@ private parseResponse(resp) {
     log.debug("Send heatingSetpoint Event Fired")
     sendEvent(name: 'coolingSetpoint', value: thermostatSetpoint, unit: temperatureUnit)
     log.debug("Send coolingSetpoint Event Fired")
-	
 
 }
 
@@ -556,6 +617,28 @@ def setHeatingSetpoint(targetTemperature) {
     setHeatingTempCommand(targetTemperature)
 	refresh()
 }
+
+def temperatureUp(){
+	if (device.currentValue("thermostatMode") == "heat") {
+    	heatingSetpointUp()
+    } else if (device.currentValue("thermostatMode") == "cool") {
+    	coolingSetpointUp()
+    } else {
+    	log.debug ("temperature setpoint not supported in the current thermostat mode")
+    }
+}
+
+def temperatureDown(){
+	if (device.currentValue("thermostatMode") == "heat") {
+    	heatingSetpointDown()
+    } else if (device.currentValue("thermostatMode") == "cool") {
+    	coolingSetpointDown()
+    } else {
+    	log.debug ("temperature setpoint not supported in the current thermostat mode")
+    }
+}
+
+
 
 def heatingSetpointUp(){
 	def capabilitysupported = state.supportsHeat
@@ -961,12 +1044,18 @@ def coolCommand(){
     def terminationmode = settings.manualmode
     def initialsetpointtemp
     def supportedfanspeed
+    def traperror
+    try {
+        traperror = Integer.parseInt(device.currentValue("thermostatSetpoint"))
+    }catch (NumberFormatException e){
+         traperror = 0 
+    }
     if (state.SupportsCoolAutoFanSpeed == "true"){
     	supportedfanspeed = "AUTO"
         } else {
         supportedfanspeed = "HIGH"
         }  
-    if(device.currentValue("thermostatSetpoint") == 0){
+    if(traperror == 0){
     	initialsetpointtemp = settings.defCoolingTemp
     } else {
     	initialsetpointtemp = device.currentValue("thermostatSetpoint")
@@ -980,12 +1069,18 @@ def heatCommand(){
     def terminationmode = settings.manualmode
     def initialsetpointtemp
     def supportedfanspeed
+    def traperror
+    try {
+        traperror = Integer.parseInt(device.currentValue("thermostatSetpoint"))
+    }catch (NumberFormatException e){
+         traperror = 0 
+    }
     if (state.SupportsHeatAutoFanSpeed == "true"){
     	supportedfanspeed = "AUTO"
         } else {
         supportedfanspeed = "HIGH"
-        }  
-    if(device.currentValue("thermostatSetpoint") == 0){
+        }
+    if(traperror == 0){
     	initialsetpointtemp = settings.defHeatingTemp
     } else {
     	initialsetpointtemp = device.currentValue("thermostatSetpoint")
@@ -996,7 +1091,14 @@ def heatCommand(){
 
 def emergencyHeat(){
 	log.debug "Executing 'sendCommand.heatCommand'"
+    def traperror
     def capabilitysupported = state.supportsHeat
+    
+    try {
+        traperror = Integer.parseInt(device.currentValue("thermostatSetpoint"))
+    }catch (NumberFormatException e){
+         traperror = 0 
+    }
     if (capabilitysupported == "true"){
 	    def initialsetpointtemp
     	def supportedfanspeed
@@ -1005,7 +1107,7 @@ def emergencyHeat(){
      	   } else {
      	   	supportedfanspeed = "HIGH"
      	   }  
-    	if(device.currentValue("thermostatSetpoint") == 0){
+    	if(traperror == 0){
     		initialsetpointtemp = settings.defHeatingTemp
     	} else {
     		initialsetpointtemp = device.currentValue("thermostatSetpoint")
