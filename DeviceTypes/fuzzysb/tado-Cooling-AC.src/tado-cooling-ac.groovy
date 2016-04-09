@@ -303,7 +303,7 @@ private parseResponse(resp) {
         	log.debug("Read thermostatMode: " + ACMode)
 			ACFanSpeed = "OFF"
         	log.debug("Read tadoFanSpeed: " + ACFanSpeed)
-			thermostatSetpoint = 0
+			thermostatSetpoint = "--"
         	log.debug("Read thermostatSetpoint: " + thermostatSetpoint)
     	}
    	 	else if (resp.data.setting.power == "ON"){
