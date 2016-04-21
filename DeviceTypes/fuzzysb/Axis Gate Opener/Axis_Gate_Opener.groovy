@@ -13,6 +13,7 @@
 * 	Axis Gate Opener
 * 
 * 	Author Stuart Buchanan
+*   Date 2016-04-21 v1.3 added some extra debug logging around the status create event to figure out why the gates status is not updating correctly
 * 	Date 2016-04-06 v1.2 should now correctly get gate status and handle state changes correctly
 * 	Date 2016-04-06 v1.1 Added User Authentication, added logging of response parsed http headers.
 * 	Date 2016-04-05 v1.0 Initial Release
@@ -125,12 +126,14 @@ private def parseHttpResponse(String data) {
 	def splitresponse = data.split("=")
     def port = splitresponse[0]
 	def status = splitresponse[1]
-	log.debug("Gate status: " + status)
+	log.debug("Gate status: " + status + ".")
 	if (status == "active"){
-		createEvent(name: "switch", value: "on", descriptionText: "$device.displayName is open", isStateChange: "true")
+	    log.debug("sending gate open status")
+		createEvent(name: "switch", value: "on", descriptionText: "$device.displayName is open")
 	} else if (status == "inactive"){
-		createEvent(name: "switch", value: "off", descriptionText: "$device.displayName is closed", isStateChange: "true")
-	}
+	    log.debug("sending gate closed status")
+		createEvent(name: "switch", value: "off", descriptionText: "$device.displayName is closed")
+	} else {log.debug("switch status not found")}
     return status
 }
 
