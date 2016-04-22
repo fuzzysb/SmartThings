@@ -13,6 +13,7 @@
 * 	Axis Gate Opener
 * 
 * 	Author Stuart Buchanan
+*   Date 2016-04-22 v1.6 Fixed issue with State CreateEvent not sending Value
 *   Date 2016-04-22 v1.5 removed just carriage returns ot line feeds from the end of the string
 *   Date 2016-04-22 v1.4 removed what looks to be a CR LF or /r/n from the end of the string
 *   Date 2016-04-21 v1.3 added some extra debug logging around the status create event to figure out why the gates status is not updating correctly
@@ -53,14 +54,14 @@ tiles(scale: 2) {
             attributeState "on", label:'Open', action:"switch.off", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/Axis%20Gate%20Opener/GateOpen.png", backgroundColor:"#ffa81e"
             attributeState "off", label:'Closed', action:"switch.on", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/Axis%20Gate%20Opener/GateClosed.png", backgroundColor:"#79b821"
         }
-    }
-	standardTile("open", "device.switch", width: 2, height: 2, decoration: "flat") {
+    }   
+	standardTile("open", "device.open", width: 2, height: 2, decoration: "flat") {
 			state "default", label:"Open", action:"switch.on", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/Axis%20Gate%20Opener/GateOpen.png", backgroundColor:"#ffa81e"
 		}	
-	standardTile("close", "device.switch", width: 2, height: 2, decoration: "flat") {
+	standardTile("close", "device.close", width: 2, height: 2, decoration: "flat") {
 			state "default", label:"Close", action:"switch.off", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/Axis%20Gate%20Opener/GateClosed.png", backgroundColor:"#79b821"
 		}
-	standardTile("refresh", "device.switch", width: 2, height: 2, decoration: "flat") {
+	standardTile("refresh", "device.refresh", width: 2, height: 2, decoration: "flat") {
 			state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
 		}			
         main "switch"
@@ -84,6 +85,7 @@ def installed() {
 
 def parse(String message) {
     def msg = stringToMap(message)
+    def result
 
     if (!msg.containsKey("headers")) {
         log.error "No HTTP headers found in '${message}'"
@@ -105,9 +107,10 @@ def parse(String message) {
         return null
     } else {
 	def body = new String(msg.body.decodeBase64())
-	parseHttpResponse(body)
+	result = parseHttpResponse(body)
 	log.debug "body: ${body}"
 	}
+    return result
 }
 
 private parseHttpHeaders(String headers) {
@@ -125,6 +128,7 @@ private parseHttpHeaders(String headers) {
 
 private def parseHttpResponse(String data) {
     log.debug("parseHttpResponse(${data})")
+    def result
 	def splitresponse = data.split("=")
     def port = splitresponse[0]
 	def status = splitresponse[1]
@@ -133,12 +137,12 @@ private def parseHttpResponse(String data) {
 	log.debug("Gate status: " + status + ".")
 	if (status == "active"){
 	    log.debug("sending gate open status")
-		createEvent(name: "switch", value: "on", descriptionText: "$device.displayName is open")
+		result = createEvent(name: "switch", value: "on", descriptionText: "$device.displayName is open", isStateChange: "true")
 	} else if (status == "inactive"){
 	    log.debug("sending gate closed status")
-		createEvent(name: "switch", value: "off", descriptionText: "$device.displayName is closed")
+		result = createEvent(name: "switch", value: "off", descriptionText: "$device.displayName is closed", isStateChange: "true")
 	} else {log.debug("switch status not found")}
-    return status
+    return result
 }
 
 def poll() {
