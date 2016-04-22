@@ -13,6 +13,7 @@
 * 	Axis Gate Opener
 * 
 * 	Author Stuart Buchanan
+*   Date 2016-04-22 v1.5 removed just carriage returns ot line feeds from the end of the string
 *   Date 2016-04-22 v1.4 removed what looks to be a CR LF or /r/n from the end of the string
 *   Date 2016-04-21 v1.3 added some extra debug logging around the status create event to figure out why the gates status is not updating correctly
 * 	Date 2016-04-06 v1.2 should now correctly get gate status and handle state changes correctly
@@ -127,7 +128,8 @@ private def parseHttpResponse(String data) {
 	def splitresponse = data.split("=")
     def port = splitresponse[0]
 	def status = splitresponse[1]
-	status = status.replace("\r\n","")
+	status = status.replace("\r","")
+	status = status.replace("\n","")
 	log.debug("Gate status: " + status + ".")
 	if (status == "active"){
 	    log.debug("sending gate open status")
