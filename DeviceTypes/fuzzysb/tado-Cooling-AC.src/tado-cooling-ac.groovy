@@ -13,6 +13,7 @@
  *	Tado Thermostat
  *
  *	Author: Stuart Buchanan, Based on original work by Ian M with thanks. also source for icons was from @tonesto7's excellent Nest Manager.
+ *	Date: 2016-04-25 v2.7 Minor changes to thermostatOperatingState to Show "idle" and "fan only" state
  *	Date: 2016-04-25 v2.6 Minor bug fix to correct issue with reading existing set point value.
  *	Date: 2016-04-09 v2.5 Major bug fix exercise, found lots and lots and lots.....now 100% conforms to ST Thermostat capability. main panel now shows colour of operating state. new attributes tadoMode and tadoFanSpeed created.
  *	Date: 2016-04-05 v2.4 Performed Testing with Thermostat Mode Director and found some deficiencies where this would not work correctly. i have now corrected, this now works fine and has been tested.
@@ -104,7 +105,7 @@ metadata {
     			attributeState("cooling", backgroundColor:"#1a75ff")
                 attributeState("emergency heat", backgroundColor:"#ff471a")
                 attributeState("drying", backgroundColor:"#c68c53")
-                attributeState("fanning", backgroundColor:"#39e600")
+                attributeState("fan only", backgroundColor:"#39e600")
                 attributeState("heating|cooling", backgroundColor:"#ff9900")
   			}
             tileAttribute("device.thermostatMode", key: "THERMOSTAT_MODE") {
@@ -319,6 +320,9 @@ private parseResponse(resp) {
                 log.debug("thermostatMode is heat, however duration shows the state is: " + ACMode)
             }
             switch (ACMode) {
+				case "off":
+        			tOperatingState = "idle"
+        		break
     			case "heat":
         			tOperatingState = "heating"
         		break
@@ -332,7 +336,7 @@ private parseResponse(resp) {
         			tOperatingState = "drying"
         		break
                 case "fan":
-        			tOperatingState = "fanning"
+        			tOperatingState = "fan only"
         		break
                 case "auto":
         			tOperatingState = "heating|cooling"
