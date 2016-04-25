@@ -310,7 +310,15 @@ private parseResponse(resp) {
 			sendEvent(name: 'thermostatMode', value: "heat")
 			sendEvent(name: 'thermostatOperatingState', value: "heating")
 			log.debug("Send thermostatMode Event Fired")
+			if (temperatureUnit == "C") {
+				thermostatSetpoint = resp.data.setting.temperature.celsius
+			}
+			else if(temperatureUnit == "F"){
+				thermostatSetpoint = resp.data.setting.temperature.fahrenheit
+			}
+			log.debug("Read thermostatSetpoint: " + thermostatSetpoint)
 		} else if(resp.data.setting.power == "OFF"){
+			thermostatSetpoint = "--"
 			sendEvent(name: 'thermostatMode', value: "off")
 			sendEvent(name: 'thermostatOperatingState', value: "idle")
 			log.debug("Send thermostatMode Event Fired")
@@ -326,13 +334,6 @@ private parseResponse(resp) {
 			       
         sendEvent(name: 'humidity', value: humidity,unit: humidityUnit)
 
-       	if (temperatureUnit == "C") {
-        	thermostatSetpoint = resp.data.setting.temperature.celsius
-        }
-        else if(temperatureUnit == "F"){
-        	thermostatSetpoint = resp.data.setting.temperature.fahrenheit
-        }
-        log.debug("Read thermostatSetpoint: " + thermostatSetpoint)
 	}	
 
 	else{
@@ -590,7 +591,13 @@ def heatCommand(){
 	log.debug "Executing 'sendCommand.heatCommand'"
 	def terminationmode = settings.manualmode
     def initialsetpointtemp
-    if(device.currentValue("thermostatSetpoint") == 0){
+	def traperror
+    try {
+        traperror = ((device.currentValue("thermostatSetpoint")).intValue())
+    }catch (NumberFormatException e){
+         traperror = 0 
+    }
+    if(traperror == 0){
     	initialsetpointtemp = settings.defHeatingTemp
     } else {
     	initialsetpointtemp = device.currentValue("thermostatSetpoint")
@@ -602,7 +609,12 @@ def heatCommand(){
 def emergencyHeat(){
 	log.debug "Executing 'sendCommand.heatCommand'"
     def initialsetpointtemp
-    if(device.currentValue("thermostatSetpoint") == 0){
+    try {
+        traperror = ((device.currentValue("thermostatSetpoint")).intValue())
+    }catch (NumberFormatException e){
+         traperror = 0 
+    }
+    if(traperror == 0){
     	initialsetpointtemp = settings.defHeatingTemp
     } else {
     	initialsetpointtemp = device.currentValue("thermostatSetpoint")
