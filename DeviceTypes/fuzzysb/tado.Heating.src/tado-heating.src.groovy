@@ -15,6 +15,7 @@
  * Author: Stuart Buchanan, Based on original work by Ian M with thanks. also source for icons was from @tonesto7's excellent Nest Manager.
  *
  *	Updates: 
+ *  2016-04-25 	v1.7 Finally found time to update this with the lessons learnt from the Tado Cooling Device Type. will bring better support for RM and Thermostat Director
  *  2016-04-08 	v1.6 added statusCommand calls to refresh more frequently, also improved compatibility with Rule Machine and Thermostat Mode Director in addition also added default heating temperature where you can set the default temperature for the mode commands.
  *  2016-04-05 	v1.5 added improved icons and also a manual Mode End function to fall back to Tado Control. 
  				Also added preference for how long manual mode runs for either ends at Tado Mode Change (TADO_MODE) or User Control (MANUAL), 
@@ -46,7 +47,9 @@ metadata {
 		capability "Polling"
 		capability "Refresh"
         
-        
+		attribute "tadoMode", "string"
+		command "temperatureUp"
+        command "temperatureDown"
         command "heatingSetpointUp"
         command "heatingSetpointDown"
 		command "on"
@@ -67,23 +70,32 @@ tiles(scale: 2){
 			tileAttribute("device.temperature", key:"PRIMARY_CONTROL", canChangeIcon: true, canChangeBackground: true){
             	attributeState "default", label:'${currentValue}°', backgroundColor:"#fab907", icon:"st.Home.home1"
             }
+			tileAttribute("device.temperature", key: "VALUE_CONTROL") {
+    			attributeState("VALUE_UP", action: "temperatureUp")
+    			attributeState("VALUE_DOWN", action: "temperatureDown")
+  			}
 			tileAttribute("device.humidity", key: "SECONDARY_CONTROL") {
     			attributeState("default", label:'${currentValue}%', unit:"%")
   			}
             tileAttribute("device.thermostatOperatingState", key: "OPERATING_STATE") {
-    			attributeState("SLEEP", label:'${name}', backgroundColor:"#0164a8")
-    			attributeState("HOME", label:'${name}', backgroundColor:"#fab907")
-    			attributeState("AWAY", label:'${name}', backgroundColor:"#62aa12")
-                attributeState("OFF", label:'${name}', backgroundColor:"#c0c0c0")
-                attributeState("MANUAL", label:'${name}', backgroundColor:"#804000")
-			}
+    			attributeState("idle", backgroundColor:"#666666")
+    			attributeState("heating", backgroundColor:"#ff471a")
+                attributeState("emergency heat", backgroundColor:"#ff471a")
+  			}
+            tileAttribute("device.thermostatMode", key: "THERMOSTAT_MODE") {
+    			attributeState("off", label:'${name}')
+    			attributeState("heat", label:'${name}')
+  			}
+			tileAttribute("device.heatingSetpoint", key: "HEATING_SETPOINT") {
+    			attributeState("default", label:'${currentValue}', unit:"dF")
+  			}
 		}
         
         valueTile("heatingSetpoint", "device.heatingSetpoint", width: 2, height: 1, decoration: "flat") {
 			state "default", label: 'Set Point\r\n\${currentValue}°'
 		}
 
-        standardTile("thermostatOperatingState", "device.thermostatOperatingState", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true) {         
+        standardTile("tadoMode", "device.tadoMode", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true) {         
 			state("SLEEP", label:'${name}', backgroundColor:"#0164a8", icon:"st.Bedroom.bedroom2")
             state("HOME", label:'${name}', backgroundColor:"#fab907", icon:"st.Home.home2")
             state("AWAY", label:'${name}', backgroundColor:"#62aa12", icon:"st.Outdoor.outdoor18")
@@ -92,8 +104,8 @@ tiles(scale: 2){
 		}
     	
 		standardTile("thermostatMode", "device.thermostatMode", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true) {
-        	state("HEAT", label:'${name}', backgroundColor:"#ea2a2a", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/heat_mode_icon.png")
-            state("OFF", label:'', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/hvac_off.png", defaultState: true)  
+        	state("heat", label:'HEAT', backgroundColor:"#ea2a2a", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/heat_mode_icon.png")
+            state("off", label:'', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/hvac_off.png", defaultState: true)  
 		}
 		
         standardTile("refresh", "device.switch", width: 2, height: 1, decoration: "flat") {
@@ -121,7 +133,7 @@ tiles(scale: 2){
             state("default", label:'', action:"endManualControl", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Heating.src/Images/endManual.png")
 		}
 		main "thermostat"
-		details (["thermostat","thermostatMode","outsidetemperature","heatingSetpoint","refresh","heatingSetpointUp","heatingSetpointDown","thermostatOperatingState","emergencyHeat","heat","Off",endManualControl])
+		details (["thermostat","thermostatMode","outsidetemperature","heatingSetpoint","refresh","heatingSetpointUp","heatingSetpointDown","tadoMode","emergencyHeat","heat","Off","endManualControl"])
 	}
 }
 def updated(){
@@ -129,7 +141,6 @@ def updated(){
 	getidCommand(),
 	getTempUnitCommand(),
 	getCapabilitiesCommand(),
-	refresh()
 	]
 	delayBetween(cmds, 2000)
 }
@@ -197,6 +208,22 @@ def setThermostatMode(requiredMode){
      }
 }
 
+def temperatureUp(){
+	if (device.currentValue("thermostatMode") == "heat") {
+    	heatingSetpointUp()
+    } else {
+    	log.debug ("temperature setpoint not supported in the current thermostat mode")
+    }
+}
+
+def temperatureDown(){
+	if (device.currentValue("thermostatMode") == "heat") {
+    	heatingSetpointDown()
+    } else {
+    	log.debug ("temperature setpoint not supported in the current thermostat mode")
+    }
+}
+
 def heatingSetpointUp(){
 	log.debug "Current SetPoint Is " + (device.currentValue("thermostatSetpoint")).toString()
     if ((device.currentValue("thermostatSetpoint").toInteger() - 1 ) < state.MinHeatTemp){
@@ -205,6 +232,7 @@ def heatingSetpointUp(){
 		int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() + 1
 		log.debug "Setting heatingSetpoint up to: ${newSetpoint}"
 		setHeatingSetpoint(newSetpoint)
+		statusCommand()
     }
 }
 
@@ -216,6 +244,7 @@ def heatingSetpointDown(){
 		int newSetpoint = (device.currentValue("thermostatSetpoint")).toInteger() - 1
 		log.debug "Setting heatingSetpoint down to: ${newSetpoint}"
 		setHeatingSetpoint(newSetpoint)
+		statusCommand()
     }
 }
 
@@ -252,6 +281,7 @@ private parseResponse(resp) {
     def ACMode
     def ACFanSpeed
     def thermostatSetpoint
+	def tOperatingState
     if(resp.status == 200) {
         log.debug("Executing parseResponse.successTrue")
         def temperature
@@ -273,18 +303,18 @@ private parseResponse(resp) {
         }else if(resp.data.overlayType == "MANUAL"){
         	autoOperation = "MANUAL"
         }
-        log.debug("Read thermostatOperatingState: " + autoOperation)
-        sendEvent(name: 'thermostatOperatingState', value: autoOperation)
+        log.debug("Read tadoMode: " + autoOperation)
+        sendEvent(name: 'tadoMode', value: autoOperation)
        
-		if (resp.data.tadoMode == "HOME" && resp.data.setting.power == "ON"){
-			sendEvent(name: 'thermostatMode', value: "HEAT")
+		if (resp.data.setting.power == "ON"){
+			sendEvent(name: 'thermostatMode', value: "heat")
+			sendEvent(name: 'thermostatOperatingState', value: "heating")
 			log.debug("Send thermostatMode Event Fired")
 		} else if(resp.data.setting.power == "OFF"){
-			sendEvent(name: 'thermostatMode', value: "OFF")
+			sendEvent(name: 'thermostatMode', value: "off")
+			sendEvent(name: 'thermostatOperatingState', value: "idle")
 			log.debug("Send thermostatMode Event Fired")
 		}
-		sendEvent(name: 'thermostatOperatingState', value: autoOperation)
-        log.debug("Send thermostatMode Event Fired")
 
         def humidity 
         if (resp.data.sensorDataPoints.humidity.percentage != null){
