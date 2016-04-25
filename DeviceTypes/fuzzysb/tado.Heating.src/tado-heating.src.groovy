@@ -544,8 +544,14 @@ def autoCommand(){
 	log.debug "Executing 'sendCommand.autoCommand'"
     def initialsetpointtemp
 	def terminationmode = settings.manualmode
-    if(device.currentValue("thermostatSetpoint") == 0){
-    	initialsetpointtemp = device.currentValue("temperature")
+    def traperror
+    try {
+        traperror = ((device.currentValue("thermostatSetpoint")).intValue())
+    }catch (NumberFormatException e){
+         traperror = 0 
+    }
+    if(traperror == 0){
+    	initialsetpointtemp = settings.defHeatingTemp
     } else {
     	initialsetpointtemp = device.currentValue("thermostatSetpoint")
     }
