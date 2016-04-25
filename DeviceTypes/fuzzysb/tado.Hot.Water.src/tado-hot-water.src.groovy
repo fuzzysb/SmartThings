@@ -12,7 +12,7 @@
  *
  *	Tado Thermostat
  *
- *	Author: Stuart Buchanan based on Original Work by Ian M with thanks
+ * 	Author: Stuart Buchanan, Based on original work by Ian M with thanks. also source for icons was from @tonesto7's excellent Nest Manager.
  * 	Date: 2016-04-08 v1.2 added setThermostatMode(mode) function to work better with Rule Machine and Thermostat Mode Director
  *	Date: 2016-04-05 v1.1 change of default Water Heating Temps can now be defined in device preferences (default Value is 90C). 
  *	Date: 2016-04-05 v1.0 Initial release

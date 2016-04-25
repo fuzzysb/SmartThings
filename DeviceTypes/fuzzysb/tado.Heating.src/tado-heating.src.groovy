@@ -12,7 +12,7 @@
  *
  *	Tado Thermostat
  *
- *	Author: Stuart Buchanan based on Original Work by Ian M with thanks
+ * Author: Stuart Buchanan, Based on original work by Ian M with thanks. also source for icons was from @tonesto7's excellent Nest Manager.
  *
  *	Updates: 
  *  2016-04-08 	v1.6 added statusCommand calls to refresh more frequently, also improved compatibility with Rule Machine and Thermostat Mode Director in addition also added default heating temperature where you can set the default temperature for the mode commands.
