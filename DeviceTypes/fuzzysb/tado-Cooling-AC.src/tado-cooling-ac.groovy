@@ -13,6 +13,7 @@
  *	Tado Thermostat
  *
  *	Author: Stuart Buchanan, Based on original work by Ian M with thanks. also source for icons was from @tonesto7's excellent Nest Manager.
+ *	Date: 2016-04-25 v2.6 Minor bug fix to correct issue with reading existing set point value.
  *	Date: 2016-04-09 v2.5 Major bug fix exercise, found lots and lots and lots.....now 100% conforms to ST Thermostat capability. main panel now shows colour of operating state. new attributes tadoMode and tadoFanSpeed created.
  *	Date: 2016-04-05 v2.4 Performed Testing with Thermostat Mode Director and found some deficiencies where this would not work correctly. i have now corrected, this now works fine and has been tested.
  *	Date: 2016-04-05 v2.3 added device preference for default temps for some commands as requested by @mitchell_lu66, also added some additional refreshes and error control for unsupported capabilities
@@ -1046,7 +1047,7 @@ def coolCommand(){
     def supportedfanspeed
     def traperror
     try {
-        traperror = Integer.parseInt(device.currentValue("thermostatSetpoint"))
+        traperror = ((device.currentValue("thermostatSetpoint")).intValue())
     }catch (NumberFormatException e){
          traperror = 0 
     }
@@ -1071,7 +1072,7 @@ def heatCommand(){
     def supportedfanspeed
     def traperror
     try {
-        traperror = Integer.parseInt(device.currentValue("thermostatSetpoint"))
+        traperror = ((device.currentValue("thermostatSetpoint")).intValue())
     }catch (NumberFormatException e){
          traperror = 0 
     }
