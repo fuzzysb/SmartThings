@@ -179,6 +179,22 @@ def setHeatingSetpoint(targetTemperature) {
 	statusCommand()
 }
 
+def temperatureUp(){
+	if (device.currentValue("thermostatMode") == "heat") {
+    	heatingSetpointUp()
+    } else {
+    	log.debug ("temperature setpoint not supported in the current thermostat mode")
+    }
+}
+
+def temperatureDown(){
+	if (device.currentValue("thermostatMode") == "heat") {
+    	heatingSetpointDown()
+    } else {
+    	log.debug ("temperature setpoint not supported in the current thermostat mode")
+    }
+}
+
 def heatingSetpointUp(){
 	log.debug "Current SetPoint Is " + (device.currentValue("thermostatSetpoint")).toString()
 	if(state.supportsWaterTempControl == "true"){ 
