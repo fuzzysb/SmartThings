@@ -13,6 +13,7 @@
  *	Tado Thermostat
  *
  *	Author: Stuart Buchanan, Based on original work by Ian M with thanks
+  *	Date: 2015-04-27 v1.1 updated API call and added refresh function
  *	Date: 2015-12-04 v1.0 Initial Release
  */
  
@@ -48,8 +49,11 @@ metadata {
 			state("not present", label:'not present', icon:"st.presence.tile.mobile-not-present", backgroundColor:"#ffffff", action:"arrived")
 			state("present", label:'present', icon:"st.presence.tile.mobile-present", backgroundColor:"#53a7c0", action:"departed")
 		}
+		standardTile("refresh", "device.refresh", width: 2, height: 1, decoration: "flat") {
+			state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
+		}
 		main "presence"
-		details "presence"
+		details ["presence","refresh"]
 	}
 }
 
