@@ -355,7 +355,7 @@ private parseCapabilitiesResponse(resp) {
         if(resp.data.type == "HOT_WATER"){
         	log.debug("setting WATER capability state true")
         	state.supportsWater = "true"
-			if ((resp.data.canSetTemperature).toString() == "true"){
+			if (resp.data.canSetTemperature == true){
 			state.supportsWaterTempControl = "true"
 				if (state.tempunit == "C"){
 					state.MaxHeatTemp = resp.data.temperatures.celsius.max
