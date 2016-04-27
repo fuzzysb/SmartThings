@@ -13,6 +13,7 @@
  *	Tado Thermostat
  *
  * 	Author: Stuart Buchanan, Based on original work by Ian M with thanks. also source for icons was from @tonesto7's excellent Nest Manager.
+ * 	Date: 2016-04-27 v1.4 Corrected Water Temp with thanks to Jill Stanton
  * 	Date: 2016-04-25 v1.3 Finally found time to update this with the lessons learnt from the Tado Cooling Device Type. will bring better support for RM and Thermostat Director
  * 	Date: 2016-04-08 v1.2 added setThermostatMode(mode) function to work better with Rule Machine and Thermostat Mode Director
  *	Date: 2016-04-05 v1.1 change of default Water Heating Temps can now be defined in device preferences (default Value is 90C). 
@@ -23,7 +24,7 @@ preferences {
 	input("username", "text", title: "Username", description: "Your Tado username")
 	input("password", "password", title: "Password", description: "Your Tado password")
     input("manualmode", "enum", title: "Default Manual Overide Method", options: ["TADO_MODE","MANUAL"], required: false, defaultValue:"TADO_MODE")
-	input("defWaterTemp", "number", title: "Default Water Heating Temperature", required: false, defaultValue: 90)
+	input("defWaterTemp", "number", title: "Default Water Heating Temperature", required: false, defaultValue: 50)
 }  
  
 metadata {
@@ -266,7 +267,7 @@ private parseResponse(resp) {
         def temperature
 		if (state.supportsWaterTempControl == "true"){
 			if (temperatureUnit == "C") {
-				temperature = (Math.round(resp.data.setting.temperature.celsius * 10 ) / 10)
+				temperature = (Math.round(resp.data.setting.temperature.celsius * 10) / 10)
 			}
 			else if(temperatureUnit == "F"){
 				temperature = (Math.round(resp.data.setting.temperature.fahrenheit * 10) / 10)
@@ -354,7 +355,7 @@ private parseCapabilitiesResponse(resp) {
         if(resp.data.type == "HOT_WATER"){
         	log.debug("setting WATER capability state true")
         	state.supportsWater = "true"
-			if (resp.data.canSetTemperature == "True"){
+			if ((resp.data.canSetTemperature).toString() == "true"){
 			state.supportsWaterTempControl = "true"
 				if (state.tempunit == "C"){
 					state.MaxHeatTemp = resp.data.temperatures.celsius.max
