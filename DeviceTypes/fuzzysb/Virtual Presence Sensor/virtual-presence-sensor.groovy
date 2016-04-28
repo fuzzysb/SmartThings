@@ -11,6 +11,8 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *	Based on original Simulated Presence code by Bob & Smartthings, but this can be used in Rule Machine
+ * v1.1 Updated Presence Tile which was having state display issues.
+ * v1.0 Initial Release
  */
 metadata {
 	// Automatically generated. Make future change here.
@@ -29,8 +31,8 @@ metadata {
 
 	tiles {
 		standardTile("presence", "device.presence", width: 2, height: 2, canChangeBackground: true) {
-			state("not present", label:'not present', icon:"st.presence.tile.mobile-not-present", backgroundColor:"#ffffff", action:"arrived")
-			state("present", label:'present', icon:"st.presence.tile.mobile-present", backgroundColor:"#53a7c0", action:"departed")
+			state("present", labelIcon:"st.presence.tile.mobile-present", backgroundColor:"#53a7c0")
+			state("not present", labelIcon:"st.presence.tile.mobile-not-present", backgroundColor:"#ffffff")
 		}
 		main "presence"
 		details "presence"
@@ -50,6 +52,6 @@ def arrived() {
 
 
 def departed() {
-	log.trace "Executing 'departed'"
+	log.trace "Executing 'Departed'"
 	sendEvent(name: "presence", value: "not present")
 }
