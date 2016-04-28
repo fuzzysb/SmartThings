@@ -13,12 +13,14 @@
  *	Tado Thermostat
  *
  *	Author: Stuart Buchanan, Based on original work by Ian M with thanks
-  *	Date: 2015-04-27 v1.1 updated API call and added refresh function
+ *	Date: 2015-04-28 v1.2 updated API call found issue where session was closed and nothing else was returned, now add number generator to input noCache statement in the query
+ *	Date: 2015-04-27 v1.1 updated API call and added refresh function
  *	Date: 2015-12-04 v1.0 Initial Release
  */
  
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
+import java.util.Random  
 
 preferences {
 	input("username", "text", title: "Username", description: "Your Tado username")
@@ -59,6 +61,7 @@ metadata {
 
 // Parse incoming device messages to generate events
 private parseResponse(resp) {
+	def result
     log.debug("Executing parseResponse: "+resp.data)
     log.debug("Output status: "+resp.status)
     if(resp.status == 200) {
@@ -75,23 +78,33 @@ private parseResponse(resp) {
                 	if (it.geolocationIsStale == false){
                     	log.debug("Users Current Relative Position is : " + it.relativePosition )
                 		if (it.relativePosition == 0) {
-                  		  	arrived()
+                  		  	result = arrived()
                   		}else{
-                  		  	departed()
+                  		  	result = departed()
                  	   }
                 	}else{
                 	log.debug("Geolocation is Stale Skipping")
                 	}
                 }else{
                 	log.debug("Users GeoTracking Not Enabled")
-                }
+                }     
 		}  
         }
     }else if(resp.status == 201){
         log.debug("Something was created/updated")
     }
+    return result  
 }
 
+def installed() {
+	log.debug "Executing 'installed'"
+	statusCommand()
+}
+
+def updated() {
+	log.debug "Executing 'updated'"
+	statusCommand()
+}
 
 def poll() {
 	log.debug "Executing 'poll'"
@@ -110,7 +123,7 @@ private sendCommand(method, args = []) {
         			uri: "https://my.tado.com", 
                     path: "/mobile/1.6/getAppUsersRelativePositions", 
                     requestContentType: "application/json", 
-                    query: [username:settings.username, password:settings.password]
+                    query: [username:settings.username, password:settings.password, noCache:args[0], webapp:1]
                     ],
 	]
 
@@ -129,7 +142,7 @@ private sendCommand(method, args = []) {
             httpGet(request)
         }
     } catch(Exception e){
-        debug("___exception: " + e)
+        log.debug("___exception: " + e)
     }
 }
 
@@ -138,17 +151,23 @@ private sendCommand(method, args = []) {
 // Commands
 def statusCommand(){
 	log.debug "Executing 'sendCommand.statusCommand'"
-	sendCommand("status",[])
+    Random rand = new Random()
+    int min = 10000
+    int max = 99999
+    int randomNum = rand.nextInt((max - min) + 1) + min
+	sendCommand("status",[randomNum])
 }
 
 def arrived() {
 	log.trace "Executing 'arrived'"
-	sendEvent(name: "presence", value: "present")
+    def result = sendEvent(name: "presence", value: "present")
+    return result
 }
 
 
 def departed() {
 	log.trace "Executing 'departed'"
-	sendEvent(name: "presence", value: "not present")
+	def result = sendEvent(name: "presence", value: "not present")
+    return result
 }
 
