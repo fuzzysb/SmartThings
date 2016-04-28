@@ -53,7 +53,7 @@ metadata {
 			state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
 		}
 		main "presence"
-		details ["presence","refresh"]
+		details (["presence","refresh"])
 	}
 }
 
