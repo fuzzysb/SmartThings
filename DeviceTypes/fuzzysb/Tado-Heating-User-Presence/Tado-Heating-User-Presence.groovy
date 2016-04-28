@@ -13,6 +13,7 @@
  *	Tado Thermostat
  *
  *	Author: Stuart Buchanan, Based on original work by Ian M with thanks
+ *	Date: 2015-04-28 v1.3 changed Presence tile as this was reporting a bug
  *	Date: 2015-04-28 v1.2 updated API call found issue where session was closed and nothing else was returned, now add number generator to input noCache statement in the query
  *	Date: 2015-04-27 v1.1 updated API call and added refresh function
  *	Date: 2015-12-04 v1.0 Initial Release
@@ -48,8 +49,8 @@ metadata {
 
 	tiles {
 		standardTile("presence", "device.presence", width: 2, height: 2, canChangeBackground: true) {
-			state("not present", label:'not present', icon:"st.presence.tile.mobile-not-present", backgroundColor:"#ffffff", action:"arrived")
-			state("present", label:'present', icon:"st.presence.tile.mobile-present", backgroundColor:"#53a7c0", action:"departed")
+			state("present", labelIcon:"st.presence.tile.mobile-present", backgroundColor:"#53a7c0")
+			state("not present", labelIcon:"st.presence.tile.mobile-not-present", backgroundColor:"#ffffff")
 		}
 		standardTile("refresh", "device.refresh", width: 2, height: 1, decoration: "flat") {
 			state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
