@@ -13,6 +13,7 @@
  *	Tado Thermostat
  *
  *	Author: Stuart Buchanan, Based on original work by Ian M with thanks. also source for icons was from @tonesto7's excellent Nest Manager.
+ *	Date: 2016-05-07 v2.8 Corrected issue with Fan Speed commands not working.
  *	Date: 2016-04-25 v2.7 Minor changes to thermostatOperatingState to Show "idle" and "fan only" state
  *	Date: 2016-04-25 v2.6 Minor bug fix to correct issue with reading existing set point value.
  *	Date: 2016-04-09 v2.5 Major bug fix exercise, found lots and lots and lots.....now 100% conforms to ST Thermostat capability. main panel now shows colour of operating state. new attributes tadoMode and tadoFanSpeed created.
@@ -69,13 +70,13 @@ metadata {
         command "heatingSetpointDown"
         command "coolingSetpointUp"
         command "coolingSetpointDown"
+        command "cmdFanSpeedAuto"
+        command "cmdFanSpeedHigh"
+        command "cmdFanSpeedMid"
+        command "cmdFanSpeedLow"
         command "dry"
         command "on"
         command "endManualControl"
-        command "fanSpeedAuto"
-        command "fanSpeedHigh"
-        command "fanSpeedMid"
-        command "fanSpeedLow"
         command "emergencyHeat"
         
 	}
@@ -164,7 +165,7 @@ metadata {
 			state "outsidetemperature", label: 'Outside Temp\r\n${currentValue}°'
 		}
        
-		standardTile("tadoFanSpeed", "device.tadoFanSpeed", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true) {
+		standardTile("tadoFanSpeed", "device.tadoFanSpeed", width: 2, height: 2, canChangeIcon: true, canChangeBackground: true, decoration: "flat") {
         	state("OFF", label:'', icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_off_icon.png", defaultState: true)
             state("AUTO", label:'', icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_auto_icon.png")
             state("HIGH", label:'', icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_high_icon.png")
@@ -207,24 +208,24 @@ metadata {
         standardTile("heatingSetpointDown", "device.heatingSetpoint", canChangeIcon: false, decoration: "flat") {
             state "heatingSetpointDown", label:'  ', action:"heatingSetpointDown", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/heat_arrow_down.png"
         }
-		standardTile("SetFanSpeedAuto", "device.tadoFanSpeed", width: 2, height: 1, canChangeIcon: true, canChangeBackground: true, decoration: "flat") {
-            state("AUTO", label:'', action:"fanSpeedAuto",  icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_auto_icon.png")
+		standardTile("cmdFanSpeedAuto", "device.thermostat", width: 2, height: 1, canChangeIcon: false, canChangeBackground: true, decoration: "flat") {
+            state("default", label:'', action:"cmdFanSpeedAuto",  icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_auto_icon.png")
         }
-        standardTile("SetFanSpeedHigh", "device.tadoFanSpeed", width: 2, height: 1, canChangeIcon: true, canChangeBackground: true, decoration: "flat") {
-            state("AUTO", label:'', action:"fanSpeedHigh",  icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_high_icon.png")
+        standardTile("cmdFanSpeedHigh", "device.thermostat", width: 2, height: 1, canChangeIcon: false, canChangeBackground: true, decoration: "flat") {
+            state("default", label:'', action:"cmdFanSpeedHigh",  icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_high_icon.png")
         }
-        standardTile("SetFanSpeedMid", "device.tadoFanSpeed", width: 2, height: 1, canChangeIcon: true, canChangeBackground: true, decoration: "flat") {
-            state("AUTO", label:'', action:"fanSpeedMid",  icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_med_icon.png")
+        standardTile("cmdFanSpeedMid", "device.thermostat", width: 2, height: 1, canChangeIcon: false, canChangeBackground: true, decoration: "flat") {
+            state("default", label:'', action:"cmdFanSpeedMid",  icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_med_icon.png")
         }
-        standardTile("SetFanSpeedLow", "device.tadoFanSpeed", width: 2, height: 1, canChangeIcon: true, canChangeBackground: true, decoration: "flat") {
-            state("AUTO", label:'', action:"fanSpeedLow",  icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_low_icon.png")
+        standardTile("cmdFanSpeedLow", "device.thermostat", width: 2, height: 1, canChangeIcon: false, canChangeBackground: true, decoration: "flat") {
+            state("default", label:'', action:"cmdFanSpeedLow",  icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/fan_low_icon.png")
         }
 		standardTile("endManualControl", "device.thermostat", width: 2, height: 1, canChangeIcon: false, canChangeBackground: true, decoration: "flat") {
             state("default", label:'', action:"endManualControl", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado-Cooling-AC.src/Images/endManual.png")
 		}
 		
 		main(["thermostat"])
-		details(["thermostat","thermostatMode","coolingSetpointUp","coolingSetpointDown","autoOperation","heatingSetpointUp","heatingSetpointDown","outsidetemperature","thermostatSetpoint","tadoMode","refresh","tadoFanSpeed","setAuto","setOn","setOff","fan","cool","heat","setDry","SetFanSpeedAuto","emergencyHeat","endManualControl","SetFanSpeedLow","SetFanSpeedMid","SetFanSpeedHigh"])
+		details(["thermostat","thermostatMode","coolingSetpointUp","coolingSetpointDown","autoOperation","heatingSetpointUp","heatingSetpointDown","outsidetemperature","thermostatSetpoint","tadoMode","refresh","tadoFanSpeed","setAuto","setOn","setOff","fan","cool","heat","setDry","cmdFanSpeedAuto","emergencyHeat","endManualControl","cmdFanSpeedLow","cmdFanSpeedMid","cmdFanSpeedHigh"])
 	}
 }
 
@@ -904,7 +905,7 @@ def endManualControl(){
 }
 
 
-def fanSpeedAuto(){
+def cmdFanSpeedAuto(){
     def supportedfanspeed
     def terminationmode = settings.manualmode
     def jsonbody
@@ -914,7 +915,7 @@ def fanSpeedAuto(){
         supportedfanspeed = "HIGH"
     } 
 	def curSetTemp = (device.currentValue("thermostatSetpoint"))
-	def curMode = (device.currentValue("thermostatMode"))
+	def curMode = ((device.currentValue("thermostatMode")).toUpperCase())
 	if (curMode == "COOL" || curMode == "HEAT"){
 		if (state.tempunit == "C") {
         	jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:curMode, power:"ON", temperature:[celsius:curSetTemp], type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
@@ -928,12 +929,12 @@ def fanSpeedAuto(){
 	}
 }
 
-def fanSpeedHigh(){
+def cmdFanSpeedHigh(){
     def jsonbody
     def supportedfanspeed = "HIGH"
     def terminationmode = settings.manualmode
 	def curSetTemp = (device.currentValue("thermostatSetpoint"))
-	def curMode = (device.currentValue("thermostatMode"))
+	def curMode = ((device.currentValue("thermostatMode")).toUpperCase())
 	if (curMode == "COOL" || curMode == "HEAT"){
 		if (state.tempunit == "C") {
         	jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:curMode, power:"ON", temperature:[celsius:curSetTemp], type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
@@ -947,12 +948,12 @@ def fanSpeedHigh(){
 	}
 }
 
-def fanSpeedMid(){
+def cmdFanSpeedMid(){
     def supportedfanspeed = "MIDDLE"
     def terminationmode = settings.manualmode
     def jsonbody
 	def curSetTemp = (device.currentValue("thermostatSetpoint"))
-	def curMode = (device.currentValue("thermostatMode"))
+	def curMode = ((device.currentValue("thermostatMode")).toUpperCase())
 	if (curMode == "COOL" || curMode == "HEAT"){
 		if (state.tempunit == "C") {
         	jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:curMode, power:"ON", temperature:[celsius:curSetTemp], type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
@@ -966,12 +967,12 @@ def fanSpeedMid(){
 	}
 }
 
-def fanSpeedLow(){
+def cmdFanSpeedLow(){
     def supportedfanspeed = "LOW"
     def terminationmode = settings.manualmode
     def jsonbody
 	def curSetTemp = (device.currentValue("thermostatSetpoint"))
-	def curMode = (device.currentValue("thermostatMode"))
+	def curMode = ((device.currentValue("thermostatMode")).toUpperCase())
 	if (curMode == "COOL" || curMode == "HEAT"){
 		if (state.tempunit == "C") {
         	jsonbody = new groovy.json.JsonOutput().toJson([setting:[fanSpeed:supportedfanspeed, mode:curMode, power:"ON", temperature:[celsius:curSetTemp], type:"AIR_CONDITIONING"], termination:[type:terminationmode]])
