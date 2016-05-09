@@ -13,7 +13,7 @@
  *	Tado Thermostat
  *
  * 	Author: Stuart Buchanan, Based on original work by Ian M with thanks. also source for icons was from @tonesto7's excellent Nest Manager.
- * 	Date: 2016-04-27 v1.4 Corrected Water Temp with thanks to Jill Stanton
+ * 	Date: 2016-04-25 v1.4 Tado Hot water does not actually return the current water temps, it only returns the Current set point temp. to get around this when the power is on for the hot water botht the temp and setpoint will both display the setpoint value, otherwise will display --
  * 	Date: 2016-04-25 v1.3 Finally found time to update this with the lessons learnt from the Tado Cooling Device Type. will bring better support for RM and Thermostat Director
  * 	Date: 2016-04-08 v1.2 added setThermostatMode(mode) function to work better with Rule Machine and Thermostat Mode Director
  *	Date: 2016-04-05 v1.1 change of default Water Heating Temps can now be defined in device preferences (default Value is 90C). 
@@ -24,7 +24,7 @@ preferences {
 	input("username", "text", title: "Username", description: "Your Tado username")
 	input("password", "password", title: "Password", description: "Your Tado password")
     input("manualmode", "enum", title: "Default Manual Overide Method", options: ["TADO_MODE","MANUAL"], required: false, defaultValue:"TADO_MODE")
-	input("defWaterTemp", "number", title: "Default Water Heating Temperature", required: false, defaultValue: 50)
+	input("defWaterTemp", "number", title: "Default Water Heating Temperature", required: false, defaultValue: 90)
 }  
  
 metadata {
@@ -88,7 +88,7 @@ tiles(scale: 2){
 			state("SLEEP", label:'${name}', backgroundColor:"#0164a8", icon:"st.Bedroom.bedroom2")
             state("HOME", label:'${name}', backgroundColor:"#fab907", icon:"st.Home.home2")
             state("AWAY", label:'${name}', backgroundColor:"#62aa12", icon:"st.Outdoor.outdoor18")
-            state("OFF", label:'${name}', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Hot.Water.src/Images/hvac_off.png", defaultState: true)
+            state("OFF", label:'', backgroundColor:"#ffffff", icon:"https://raw.githubusercontent.com/fuzzysb/SmartThings/master/DeviceTypes/fuzzysb/tado.Hot.Water.src/Images/hvac_off.png", defaultState: true)
             state("MANUAL", label:'${name}', backgroundColor:"#804000", icon:"st.Weather.weather1")
 		}
     	
@@ -265,9 +265,9 @@ private parseResponse(resp) {
     if(resp.status == 200) {
         log.debug("Executing parseResponse.successTrue")
         def temperature
-		if (state.supportsWaterTempControl == "true"){
+		if (state.supportsWaterTempControl == "true" && resp.data.tadoMode != null && resp.data.setting.power != "OFF"){
 			if (temperatureUnit == "C") {
-				temperature = (Math.round(resp.data.setting.temperature.celsius * 10) / 10)
+				temperature = (Math.round(resp.data.setting.temperature.celsius * 10 ) / 10)
 			}
 			else if(temperatureUnit == "F"){
 				temperature = (Math.round(resp.data.setting.temperature.fahrenheit * 10) / 10)
@@ -301,7 +301,7 @@ private parseResponse(resp) {
 			log.debug("Send thermostatMode Event Fired")
 		}
         log.debug("Send thermostatMode Event Fired")
-		if (state.supportsWaterTempControl == "true"){
+		if (state.supportsWaterTempControl == "true" && resp.data.tadoMode != null && resp.data.setting.power != "OFF"){
 			if (temperatureUnit == "C") {
 				thermostatSetpoint = resp.data.setting.temperature.celsius
 			}
