@@ -72,8 +72,9 @@ definition(
 	description: "Rule",
 	category: "Convenience",
 	parent: "bravenel:Rule Machine",
-	iconUrl: "https://raw.githubusercontent.com/bravenel/Rule-Trigger/master/smartapps/bravenel/RuleMachine.png",
-	iconX2Url: "https://raw.githubusercontent.com/bravenel/Rule-Trigger/master/smartapps/bravenel/RuleMachine%402x.png",
+	iconUrl: "https://github.com/fuzzysb/SmartThings/tree/master/SmartApps/fuzzysb/Rule%20Machine/RuleMachine.png",
+	iconX2Url: "https://github.com/fuzzysb/SmartThings/tree/master/SmartApps/fuzzysb/Rule%20Machine/RuleMachine%402x.png",
+	iconX3Url: "https://github.com/fuzzysb/SmartThings/tree/master/SmartApps/fuzzysb/Rule%20Machine/RuleMachine%402x.png"
 )
 
 preferences {
