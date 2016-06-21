@@ -43,9 +43,9 @@ definition(
 	author: "Bruce Ravenel and Mike Maxwell",
 	description: "Rule Machine",
 	category: "My Apps",
-	iconUrl: "https://github.com/fuzzysb/SmartThings/tree/master/SmartApps/fuzzysb/Rule%20Machine/RuleMachine.png",
-	iconX2Url: "https://github.com/fuzzysb/SmartThings/tree/master/SmartApps/fuzzysb/Rule%20Machine/RuleMachine%402x.png",
-	iconX3Url: "https://github.com/fuzzysb/SmartThings/tree/master/SmartApps/fuzzysb/Rule%20Machine/RuleMachine%402x.png"
+	iconUrl: "https://raw.githubusercontent.com/fuzzysb/SmartThings/master/SmartApps/fuzzysb/Rule%20Machine/RuleMachine.png",
+	iconX2Url: "https://raw.githubusercontent.com/fuzzysb/SmartThings/master/SmartApps/fuzzysb/Rule%20Machine/RuleMachine%402x.png",
+	iconX3Url: "https://raw.githubusercontent.com/fuzzysb/SmartThings/master/SmartApps/fuzzysb/Rule%20Machine/RuleMachine%402x.png"
 )
 
 preferences {
