@@ -13,6 +13,7 @@
  *	Tado Thermostat
  *
  * 	Author: Stuart Buchanan, Based on original work by Ian M with thanks. also source for icons was from @tonesto7's excellent Nest Manager.
+ *	Date: 2016-07-13 v1.5 Quick dirty workaround to control zones with a single account.
  * 	Date: 2016-04-25 v1.4 Tado Hot water does not actually return the current water temps, it only returns the Current set point temp. to get around this when the power is on for the hot water botht the temp and setpoint will both display the setpoint value, otherwise will display --
  * 	Date: 2016-04-25 v1.3 Finally found time to update this with the lessons learnt from the Tado Cooling Device Type. will bring better support for RM and Thermostat Director
  * 	Date: 2016-04-08 v1.2 added setThermostatMode(mode) function to work better with Rule Machine and Thermostat Mode Director
@@ -23,6 +24,7 @@
 preferences {
 	input("username", "text", title: "Username", description: "Your Tado username")
 	input("password", "password", title: "Password", description: "Your Tado password")
+	input("tadoZoneId", "number", title: "Enter Tado Zone ID?", required: true)
     input("manualmode", "enum", title: "Default Manual Overide Method", options: ["TADO_MODE","MANUAL"], required: false, defaultValue:"TADO_MODE")
 	input("defWaterTemp", "number", title: "Default Water Heating Temperature", required: false, defaultValue: 90)
 }  
@@ -427,19 +429,19 @@ private sendCommand(method, args = []) {
                     ],
         'getcapabilities': [
         			uri: "https://my.tado.com", 
-                    path: "/api/v2/homes/" + state.homeId + "/zones/0/capabilities", 
+                    path: "/api/v2/homes/" + state.homeId + "/zones/" + settings.tadoZoneId + "/capabilities", 
                     requestContentType: "application/json", 
                     query: [username:settings.username, password:settings.password]
                     ],
         'status': [
         			uri: "https://my.tado.com", 
-                    path: "/api/v2/homes/" + state.homeId + "/zones/0/state", 
+                    path: "/api/v2/homes/" + state.homeId + "/zones/" + settings.tadoZoneId + "/state", 
                     requestContentType: "application/json", 
                     query: [username:settings.username, password:settings.password]
                     ],
 		'temperature': [	
         			uri: "https://my.tado.com",
-        			path: "/api/v2/homes/" + state.homeId + "/zones/0/overlay",
+        			path: "/api/v2/homes/" + state.homeId + "/zones/" + settings.tadoZoneId + "/overlay",
         			requestContentType: "application/json",
                     query: [username:settings.username, password:settings.password],
                   	body: args[0]
@@ -452,7 +454,7 @@ private sendCommand(method, args = []) {
                    	],
         'deleteEntry': [	
         			uri: "https://my.tado.com",
-        			path: "/api/v2/homes/" + state.homeId + "/zones/0/overlay",
+        			path: "/api/v2/homes/" + state.homeId + "/zones/" + settings.tadoZoneId + "/overlay",
         			requestContentType: "application/json",
                     query: [username:settings.username, password:settings.password],
                    	]
