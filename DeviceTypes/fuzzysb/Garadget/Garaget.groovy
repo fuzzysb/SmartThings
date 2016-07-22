@@ -12,6 +12,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ * 22/07/2016 V1.4 updated with "Garage Door Control" capability with thanks to Nick Jones, also have improved the open command to refresh status again after door motion timeframe has elapsed
  * 12/02/2016 V1.3 updated with to remove token and DeviceId parameters from inputs to retrieving from dni
  */
  
@@ -41,6 +42,7 @@ metadata {
         capability "Refresh"
         capability "Polling"
 		capability "Configuration"
+		capability "Garage Door Control"
 		
         attribute "reflection", "string"
         attribute "status", "string"
@@ -183,8 +185,9 @@ private parseDoorConfigResponse(resp) {
         log.debug("Firmware Version: "+ver)
         def rdt = rdtvalues[1]
         log.debug("Sensor Scan Interval (ms): "+rdt )
-        def mtt = mttvalues[1]
-        log.debug("Door Moving Time (ms): "+mtt )
+        def mtt = mttvalues[1]    
+        state.mtt = mtt
+        log.debug("Door Moving Time (ms): "+state.mtt )
         def rlt = rltvalues[1]
         log.debug("Button Press Time (ms): "+rlt )
         def rlp = rlpvalues[1]
@@ -335,13 +338,21 @@ private sendCommand(method, args = []) {
 def on() {
 	log.debug "Executing 'on'"
 	openCommand()
-    statusCommand()
+    def cmds = [
+    statusCommand(),
+	statusCommand()
+    ]
+    delayBetween(cmds, (state.mtt).toInteger())
 }
 
 def off() {
 	log.debug "Executing 'off'"
 	closeCommand()
+    def cmds = [
+    statusCommand(),
 	statusCommand()
+    ]
+    delayBetween(cmds, (state.mtt).toInteger())
 }
 
 def stop(){
@@ -366,6 +377,16 @@ def closeCommand(){
 	log.debug "Executing 'sendCommand.setState'"
 	def jsonbody = new groovy.json.JsonOutput().toJson(arg:"close")
 	sendCommand("setState",[jsonbody])
+}
+
+def open() {
+	log.debug "Executing 'on'"
+	on()
+}
+
+def close() {
+	log.debug "Executing 'off'"
+	off()
 }
 
 def doorConfigCommand(){
