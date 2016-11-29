@@ -109,11 +109,6 @@ And
 
 In the ST app, under myHome/Things.
 
-countless hours have been devoted to developing this smartapp and connected devices. please donate to aid further development of this product. and and all donation are very much appreciated.
+countless hours have been devoted to developing this smartapp and connected devices. if you use and find useful please donate to aid further development of this product. any and all donations are very much appreciated.
 
-<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
-<input type="hidden" name="cmd" value="_s-xclick" />
-<input type="hidden" name="hosted_button_id" value="CNRR3ER3CTYDQ" />
-<input type="image" src="https://www.paypal.com/en_GB/i/btn/btn_donateCC_LG.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Donate" />
-<img alt="" border="0" src="https://www.paypal.com/en_GB/i/scr/pixel.gif" width="1" height="1" />
-</form>
+https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=CNRR3ER3CTYDQ
