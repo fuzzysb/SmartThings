@@ -15,6 +15,7 @@
  * Author: Stuart Buchanan, Based on original work by Ian M with thanks. also source for icons was from @tonesto7's excellent Nest Manager.
  *
  *	Updates:
+ *	Date: 2016-12-03  v2.0 Removed Device Prefs as they are now hosted by the Tado (Connect) SmartApp and added getInitialDeviceInfo function
  *	Date: 2016-11-28  v1.9 Moved all data collection functions into Tado (Connect) SmartApp, huge changes to device handler, existing devices and handler will need to be uninstalled before installing this version
  *	Date: 2016-07-13  v1.8 Quick dirty workaround to control zones with a single account.
  *  Date: 2016-04-25 	v1.7 Finally found time to update this with the lessons learnt from the Tado Cooling Device Type. will bring better support for RM and Thermostat Director
@@ -30,11 +31,6 @@
  */
 
 preferences {
-	input("username", "text", title: "Username", description: "Your Tado username")
-	input("password", "password", title: "Password", description: "Your Tado password")
-	input("tadoZoneId", "number", title: "Enter Tado Zone ID?", required: true)
-  input("manualmode", "enum", title: "Default Manual Overide Method", options: ["TADO_MODE","MANUAL"], required: false, defaultValue:"TADO_MODE")
-	input("defHeatingTemp", "number", title: "Default Heating Temperature?", required: false, defaultValue: 21)
 }
 
 metadata {
@@ -161,6 +157,11 @@ def updated(){
 
 def installed(){
 	refresh()
+}
+
+def getInitialDeviceinfo(){
+	parent.getCapabilitiesCommand(this, device.deviceNetworkId)
+    refresh()
 }
 
 def poll() {
