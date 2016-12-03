@@ -12,6 +12,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ * 03/12/2016 v1.1 Updated to Support Multiple Hubs, and fixed bug in device discovery and creation, however all device types need updated also.
  * 26/11/2016 V1.0 initial release
  */
 
@@ -36,7 +37,7 @@ definition(
 	iconUrl:   "https://dl.dropboxusercontent.com/s/fvjrqcy5xjxsr31/tado_128.png",
 	iconX2Url: "https://dl.dropboxusercontent.com/s/jyad58wb28ibx2f/tado_256.png",
 	oauth: true,
-    singleInstance: true
+    singleInstance: false
 ) {
 	appSetting "clientId"
 	appSetting "clientSecret"
@@ -117,6 +118,20 @@ def advancedOptions() {
 		section("Tado Override Method") {
       	input("manualmode", "enum", title: "Default Tado Manual Overide Method", options: ["TADO_MODE","MANUAL"], required: true)
     	}
+        section(){
+    		if (getHubID() == null){
+        		input(
+            		name		: "myHub"
+            		,type		: "hub"
+            		,title		: "Select your hub"
+            		,multiple		: false
+            		,required		: true
+            		,submitOnChange	: true
+        		)
+     		} else {
+        		paragraph("Tap done to finish the initial installation.")
+     		}
+		}
     }
 }
 
@@ -233,7 +248,7 @@ def installed() {
 
 def updated() {
 	log.debug "Updated with settings: ${settings}"
-  unsubscribe()
+  	unsubscribe()
 	unschedule()
 	initialize()
 }
@@ -259,7 +274,7 @@ def initialize() {
         def deviceName = item[2]
         def existingDevices = children.find{ d -> d.deviceNetworkId.contains(deviceId + "|" + deviceType) }
         log.debug("existingDevices Inspected ${existingDevices.inspect()}")
-    		if(!existingDevices) {
+    	if(!existingDevices) {
           log.debug("Some Devices were not found....creating Child Device ${deviceName}")
           try {
             if (deviceType == "HOT_WATER")
@@ -277,17 +292,48 @@ def initialize() {
               log.debug("Creating Air Conditioning Device ${deviceName}")
               createChildDevice("Tado Cooling Thermostat", deviceId + "|" + deviceType + "|" + state.accessToken, "${deviceName}", deviceName)
             }
- 			} catch (Exception e) {
+ 			} catch (Exception e)
+            {
 					log.error "Error creating device: ${e}"
-				}
-        getInititialDeviceInfo(existingDevices)
-    		} else {getInititialDeviceInfo(existingDevices)}
+			}
+    		}
 		}
     }
 	// Do the initial poll
-	poll()
+    getInititialDeviceInfo()
+
 	// Schedule it to run every 5 minutes
 	runEvery5Minutes("poll")
+}
+
+def getInititialDeviceInfo(){
+	log.debug "getInititialDeviceInfo"
+	getDeviceList();
+	def children = getChildDevices()
+	if(settings.devices) {
+    settings.devices.each { device ->
+      log.debug("Devices Inspected ${device.inspect()}")
+      def item = device.tokenize('|')
+      def deviceType = item[0]
+      def deviceId = item[1]
+      def deviceName = item[2]
+      def existingDevices = children.find{ d -> d.deviceNetworkId.contains(deviceId + "|" + deviceType) }
+      if(existingDevices) {
+        existingDevices.getInitialDeviceinfo()
+      }
+	   }
+  }
+
+}
+def getHubID(){
+	def hubID
+    if (myHub){
+        hubID = myHub.id
+    } else {
+        def hubs = location.hubs.findAll{ it.type == physicalgraph.device.HubType.PHYSICAL }
+        if (hubs.size() == 1) hubID = hubs[0].id
+    }
+    return hubID
 }
 
 def poll() {
@@ -312,7 +358,7 @@ def poll() {
 def createChildDevice(deviceFile, dni, name, label) {
 	log.debug "In createChildDevice"
     try{
-		def childDevice = addChildDevice("fuzzysb", deviceFile, dni, null, [name: name, label: label, completedSetup: true])
+		def childDevice = addChildDevice("fuzzysb", deviceFile, dni, getHubID(), [name: name, label: label, completedSetup: true])
 	} catch (e) {
 		log.error "Error creating device: ${e}"
 	}
@@ -921,11 +967,6 @@ private parseweatherResponse(resp,childDevice) {
     }
 }
 
-def getInititialDeviceInfo(childDevice){
-  getCapabilitiesCommand(childDevice, childDevice.device.deviceNetworkId)
-  statusCommand(childDevice)
-}
-
 def getidCommand(){
 	log.debug "Executing 'sendCommand.getidCommand'"
 	sendCommand("getid",null,[])
@@ -951,10 +992,12 @@ def weatherStatusCommand(childDevice){
 }
 
 def getCapabilitiesCommand(childDevice, deviceDNI){
-  def item = deviceDNI.tokenize('|')
-  def deviceId = item[0]
-  def deviceType = item[1]
-  def deviceToken = item[2]
+	log.debug("childDevice is: " + childDevice.inspect())
+	log.debug("deviceDNI is: " + deviceDNI.inspect())
+	def item = deviceDNI.tokenize('|')
+	def deviceId = item[0]
+	def deviceType = item[1]
+	def deviceToken = item[2]
 	log.debug "Executing 'sendCommand.getcapabilities'"
 	sendCommand("getcapabilities",childDevice,[deviceId])
 }
@@ -1306,7 +1349,7 @@ def onCommand(childDevice){
 }
 
 def coolCommand(childDevice){
-	   log.debug "Executing 'sendCommand.coolCommand'"
+	log.debug "Executing 'sendCommand.coolCommand'"
     def terminationmode = settings.manualmode
     def item = (childDevice.device.dni).tokenize('|')
     def deviceId = item[0]
