@@ -13,6 +13,7 @@
  *	Tado AC Thermostat
  *
  *	Author: Stuart Buchanan, Based on original work by Ian M with thanks. also source for icons was from @tonesto7's excellent Nest Manager.
+ *  Date: 2016-12-03 v3.1 added getInitialDeviceInfo function
  *	Date: 2016-11-28 v3.0 Moved all data collection functions into Tado (Connect) SmartApp, huge changes to device handler, existing devices and handler will need to be uninstalled before installing this version
  *	Date: 2016-07-13 v2.9 Quick dirty workaround to control zones with a single account.
  *	Date: 2016-05-07 v2.8 Corrected issue with Fan Speed commands not working.
@@ -396,6 +397,11 @@ def off() {
 	log.debug "Executing 'off'"
 	parent.offCommand(this)
   parent.statusCommand(this)
+}
+
+def getInitialDeviceinfo(){
+	parent.getCapabilitiesCommand(this, device.deviceNetworkId)
+    refresh()
 }
 
 def dry() {
