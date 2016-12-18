@@ -12,6 +12,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ * 03/12/2016 v1.2 Corrected Values for Heating and Hot Water set Points
  * 03/12/2016 v1.1 Updated to Support Multiple Hubs, and fixed bug in device discovery and creation, however all device types need updated also.
  * 26/11/2016 V1.0 initial release
  */
@@ -292,7 +293,7 @@ def initialize() {
               log.debug("Creating Air Conditioning Device ${deviceName}")
               createChildDevice("Tado Cooling Thermostat", deviceId + "|" + deviceType + "|" + state.accessToken, "${deviceName}", deviceName)
             }
- 			} catch (Exception e)
+ 			} catch (Exception e) 
             {
 					log.error "Error creating device: ${e}"
 			}
@@ -301,7 +302,7 @@ def initialize() {
     }
 	// Do the initial poll
     getInititialDeviceInfo()
-
+	
 	// Schedule it to run every 5 minutes
 	runEvery5Minutes("poll")
 }
@@ -330,8 +331,8 @@ def getHubID(){
     if (myHub){
         hubID = myHub.id
     } else {
-        def hubs = location.hubs.findAll{ it.type == physicalgraph.device.HubType.PHYSICAL }
-        if (hubs.size() == 1) hubID = hubs[0].id
+        def hubs = location.hubs.findAll{ it.type == physicalgraph.device.HubType.PHYSICAL } 
+        if (hubs.size() == 1) hubID = hubs[0].id 
     }
     return hubID
 }
@@ -887,13 +888,13 @@ private parseCapabilitiesResponse(resp,childDevice) {
           	childDevice?.setCapabilitySupportsHeat("true")
             if (state.tempunit == "C")
             {
-              childDevice?.setCapabilityMaxHeatTemp(resp.data.HEAT.temperatures.celsius.max)
-              childDevice?.setCapabilityMinHeatTemp(resp.data.HEAT.temperatures.celsius.min)
+              childDevice?.setCapabilityMaxHeatTemp(resp.data.temperatures.celsius.max)
+              childDevice?.setCapabilityMinHeatTemp(resp.data.temperatures.celsius.min)
             }
             else if (state.tempunit == "F")
             {
-              childDevice?.setCapabilityMaxHeatTemp(resp.data.HEAT.temperatures.fahrenheit.max)
-              childDevice?.setCapabilityMinHeatTemp(resp.data.HEAT.temperatures.fahrenheit.min)
+              childDevice?.setCapabilityMaxHeatTemp(resp.data.temperatures.fahrenheit.max)
+              childDevice?.setCapabilityMinHeatTemp(resp.data.temperatures.fahrenheit.min)
             }
           }
           else
@@ -911,13 +912,13 @@ private parseCapabilitiesResponse(resp,childDevice) {
                 childDevice?.setCapabilitySupportsWaterTempControl("true")
                 if (state.tempunit == "C")
                 {
-                  childDevice?.setCapabilityMaxHeatTemp(resp.data.HEAT.temperatures.celsius.max)
-                  childDevice?.setCapabilityMinHeatTemp(resp.data.HEAT.temperatures.celsius.min)
+                  childDevice?.setCapabilityMaxHeatTemp(resp.data.temperatures.celsius.max)
+                  childDevice?.setCapabilityMinHeatTemp(resp.data.temperatures.celsius.min)
                 }
                 else if (state.tempunit == "F")
                 {
-                  childDevice?.setCapabilityMaxHeatTemp(resp.data.HEAT.temperatures.fahrenheit.max)
-                  childDevice?.setCapabilityMinHeatTemp(resp.data.HEAT.temperatures.fahrenheit.min)
+                  childDevice?.setCapabilityMaxHeatTemp(resp.data.temperatures.fahrenheit.max)
+                  childDevice?.setCapabilityMinHeatTemp(resp.data.temperatures.fahrenheit.min)
                 }
               }
               else
