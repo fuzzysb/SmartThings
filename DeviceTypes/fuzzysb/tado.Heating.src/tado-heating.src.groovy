@@ -15,7 +15,8 @@
  * Author: Stuart Buchanan, Based on original work by Ian M with thanks. also source for icons was from @tonesto7's excellent Nest Manager.
  *
  *	Updates:
- *	Date: 2016-12-03  v2.0 Removed Device Prefs as they are now hosted by the Tado (Connect) SmartApp and added getInitialDeviceInfo function
+ *	Date: 2016-12-18  v2.1 added missing cpabilities commands which prevented set points from working correctly
+ *	Date: 2016-12-03  v2.0 Removed Device Prefs as they are now hosted by the Tado (Connect) SmartApp
  *	Date: 2016-11-28  v1.9 Moved all data collection functions into Tado (Connect) SmartApp, huge changes to device handler, existing devices and handler will need to be uninstalled before installing this version
  *	Date: 2016-07-13  v1.8 Quick dirty workaround to control zones with a single account.
  *  Date: 2016-04-25 	v1.7 Finally found time to update this with the lessons learnt from the Tado Cooling Device Type. will bring better support for RM and Thermostat Director
@@ -140,6 +141,17 @@ def getWeather(){
 	parent.weatherStatusCommand(this)
 }
 
+def setCapabilitytadoType(value){
+  state.tadoType = value
+  log.debug("state.tadoType = ${state.tadoType}")
+}
+
+def getCapabilitytadoType() {
+  def map = null
+  map = [name: "capabilityTadoType", value: state.tadoType]
+  return map
+}
+
 def setCapabilitySupportsHeat(value){
   state.supportsHeat = value
   log.debug("state.supportsHeat = ${state.supportsHeat}")
@@ -151,15 +163,44 @@ def getCapabilitySupportsHeat() {
   return map
 }
 
+def getCapabilityMinCoolTemp() {
+  def map = null
+  map = [name: "capabilityMinCoolTemp", value: state.MinCoolTemp]
+  return map
+}
+
+def setCapabilityMaxHeatTemp(value){
+  state.MaxHeatTemp = value
+  log.debug("set state.MaxHeatTemp to : " + state.MaxHeatTemp)
+}
+
+def getCapabilityMaxHeatTemp() {
+  def map = null
+  map = [name: "capabilityMaxHeatTemp", value: state.MaxHeatTemp]
+  return map
+}
+
+def setCapabilityMinHeatTemp(value){
+  state.MinHeatTemp = value
+  log.debug("set state.MinHeatTemp to : " + state.MinHeatTemp)
+}
+
+def getCapabilityMinHeatTemp() {
+  def map = null
+  map = [name: "capabilityMinHeatTemp", value: state.MinHeatTemp]
+  return map
+}
+
 def updated(){
-	refresh()
+	getInitialDeviceinfo()
 }
 
 def installed(){
-	refresh()
+	getInitialDeviceinfo()
 }
 
 def getInitialDeviceinfo(){
+	log.debug "Getting 'initial Device info'"
 	parent.getCapabilitiesCommand(this, device.deviceNetworkId)
     refresh()
 }
