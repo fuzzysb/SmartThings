@@ -13,6 +13,7 @@
  *	Tado Thermostat
  *
  * 	Author: Stuart Buchanan, Based on original work by Ian M with thanks. also source for icons was from @tonesto7's excellent Nest Manager.
+ * 	Date: 2016-12-18 v1.8 added missing functions to support Set point changes
  *  Date: 2016-12-03 v1.7 Removed Device Prefs as they are now hosted by the Tado (Connect) SmartApp and added getInitialDeviceInfo function
  * 	Date: 2016-11-28 v1.6 Moved all data collection functions into Tado (Connect) SmartApp, huge changes to device handler, existing devices and handler will need to be uninstalled before installing this version
  *	Date: 2016-07-13 v1.5 Quick dirty workaround to control zones with a single account.
@@ -128,6 +129,17 @@ def getWeather(){
 	parent.weatherStatusCommand(this)
 }
 
+def setCapabilitytadoType(value){
+  state.tadoType = value
+  log.debug("state.tadoType = ${state.tadoType}")
+}
+
+def getCapabilitytadoType() {
+  def map = null
+  map = [name: "capabilityTadoType", value: state.tadoType]
+  return map
+}
+
 def setCapabilitySupportsWater(value){
   state.supportsWater = value
   log.debug("state.supportsWater = ${state.supportsWater}")
@@ -150,12 +162,33 @@ def getCapabilitySupportsWaterTempControl() {
   return map
 }
 
+def setCapabilityMaxHeatTemp(value){
+  state.MaxHeatTemp = value
+  log.debug("set state.MaxHeatTemp to : " + state.MaxHeatTemp)
+}
+
+def getCapabilityMaxHeatTemp() {
+  def map = null
+  map = [name: "capabilityMaxHeatTemp", value: state.MaxHeatTemp]
+  return map
+}
+
+def setCapabilityMinHeatTemp(value){
+  state.MinHeatTemp = value
+  log.debug("set state.MinHeatTemp to : " + state.MinHeatTemp)
+}
+
+def getCapabilityMinHeatTemp() {
+  def map = null
+  map = [name: "capabilityMinHeatTemp", value: state.MinHeatTemp]
+  return map
+}
 def updated(){
-	refresh()
+	getInitialDeviceinfo()
 }
 
 def installed(){
-	refresh()
+	getInitialDeviceinfo()
 }
 
 def getInitialDeviceinfo(){
