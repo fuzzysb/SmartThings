@@ -21,14 +21,23 @@ metadata {
 }
 
 def parse(description) {
-    def events = []
-    def descMap = parseDescriptionAsMap(description)
-    def body = new String(descMap["body"].decodeBase64())
-    def slurper = new JsonSlurper()
-    def result = slurper.parseText(body)
+	log.debug description
+	def events = [] 
+    def result
+   	def descMap = parseDescriptionAsMap(description)
+    def body = new String(descMap["body"])
+    if (body != "T0s="){
+    	body = new String(descMap["body"].decodeBase64())
+   		def slurper = new JsonSlurper()
+   		result = slurper.parseText(body)
+    } else {
+    	result = "OK"
+    }
     log.debug result
-
-    if (result.containsKey("OK")) {
+    if (result == "OK"){
+    	events << createEvent(name:"hubInfo", value:result)
+    }
+    else (result.containsKey("OK")) {
        events << createEvent(name:"hubInfo", value:result.OK)
     }
     return events
@@ -69,6 +78,22 @@ def api(String veraCommand, String veraDevId) {
 		case "off":
 			cmdPath = "/data_request?id=action&output_format=json&DeviceNum=${veraDevId}&serviceId=urn:upnp-org:serviceId:SwitchPower1&action=SetTarget&newTargetValue=0"
 			log.debug "The Switch Off Command was sent to Vera Device ID: ${veraDevId}"
+        break;
+        case "open":
+			cmdPath = "/data_request?id=variableset&output_format=json&DeviceNum=${veraDevId}&serviceId=urn:micasaverde-com:serviceId:SecuritySensor1&Variable=Tripped&Value=1"
+			log.debug "The Contact Open Command was sent to Vera Device ID: ${veraDevId}"
+        break;
+		case "closed":
+			cmdPath = "/data_request?id=variableset&output_format=json&DeviceNum=${veraDevId}&serviceId=urn:micasaverde-com:serviceId:SecuritySensor1&Variable=Tripped&Value=0"
+			log.debug "The Contact Closed Command was sent to Vera Device ID: ${veraDevId}"
+        break;
+        case "active":
+			cmdPath = "/data_request?id=variableset&output_format=json&DeviceNum=${veraDevId}&serviceId=urn:micasaverde-com:serviceId:SecuritySensor1&Variable=Tripped&Value=1"
+			log.debug "The Motion active Command was sent to Vera Device ID: ${veraDevId}"
+        break;
+        case "inactive":
+			cmdPath = "/data_request?id=variableset&output_format=json&DeviceNum=${veraDevId}&serviceId=urn:micasaverde-com:serviceId:SecuritySensor1&Variable=Tripped&Value=0"
+			log.debug "The Motion inactive Command was sent to Vera Device ID: ${veraDevId}"
 		break;
 	}
     
