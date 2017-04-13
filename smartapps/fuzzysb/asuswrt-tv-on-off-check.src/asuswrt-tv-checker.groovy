@@ -67,13 +67,13 @@ def getSwitch() {
 }
 
 def switchon() {
-        	DEBUG("arrived")
-            virtualSwitch.arrived();
+        	DEBUG("On")
+            virtualSwitch.on();
 }
 
 def switchoff() {
-        	DEBUG("departed")
-            virtualSwitch.departed();
+        	DEBUG("Off")
+            virtualSwitch.off();
 }
 
 def getToken(){
