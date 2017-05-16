@@ -1,5 +1,10 @@
 #!/bin/sh
 
+if [ ! -d /tmp/CheckTV ]
+ then
+  mkdir /tmp/CheckTV
+fi
+
 LivingRoomTV=Off
 ConservatoryTV=Off
 BedroomTV=Off
@@ -16,85 +21,85 @@ do
 done
 
 case "$macadresser" in
- *54:88:0E:95:29:3D*)
+ *XX:XX:XX:XX:XX:XX*)
  LivingRoomTV=On
  ;;
 esac
 
 case "$macadresser" in
- *54:88:0E:C2:98:2D*)
+ *XX:XX:XX:XX:XX:XX*)
  ConservatoryTV=On
  ;;
 esac
 
 case "$macadresser" in
- *F8:04:2E:A5:F8:71*)
+ *XX:XX:XX:XX:XX:XX*)
  BedroomTV=On
  ;;
 esac
 
 case "$macadresser" in
- *B4:AE:2B:A5:F2:E8*)
+ *XX:XX:XX:XX:XX:XX*)
  XBoxOne=On
  ;;
 esac
 
 if [ "$LivingRoomTV" = On ]
 then
- if [ ! -f /jffs/scripts/CheckTV/LivingRoomTVOn ]
+ if [ ! -f /tmp/CheckTV/LivingRoomTVOn ]
  then
-  touch /jffs/scripts/CheckTV/LivingRoomTVOn
+  touch /tmp/CheckTV/LivingRoomTVOn
   curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/9d0305a0-96c1-43a2-a2ae-f660a160bd61/TV/on?access_token=893daa02-fd91-4766-947a-e89e1d1d00bd" -k
  fi
 else
- if [ -f /jffs/scripts/CheckTV/LivingRoomTVOn ]
+ if [ -f /tmp/CheckTV/LivingRoomTVOn ]
  then
-  rm -f /jffs/scripts/CheckTV/LivingRoomTVOn
+  rm -f /tmp/CheckTV/LivingRoomTVOn
   curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/9d0305a0-96c1-43a2-a2ae-f660a160bd61/TV/off?access_token=893daa02-fd91-4766-947a-e89e1d1d00bd" -k
   fi
 fi
 
 if [ "$ConservatoryTV" = On ]
 then
- if [ ! -f /jffs/scripts/CheckTV/ConservatoryTVOn ]
+ if [ ! -f /tmp/CheckTV/ConservatoryTVOn ]
  then
-  touch /jffs/scripts/CheckTV/ConservatoryTVOn
+  touch /tmp/CheckTV/ConservatoryTVOn
   curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/85655506-f90d-426f-81fe-81b9687ac9bc/TV/on?access_token=4ad0d680-1616-4c4b-a0b7-f23584ac98b8" -k
  fi
 else
- if [ -f /jffs/scripts/CheckTV/ConservatoryTVOn ]
+ if [ -f /tmp/CheckTV/ConservatoryTVOn ]
  then
-  rm -f /jffs/scripts/CheckTV/ConservatoryTVOn
+  rm -f /tmp/CheckTV/ConservatoryTVOn
   curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/85655506-f90d-426f-81fe-81b9687ac9bc/TV/off?access_token=4ad0d680-1616-4c4b-a0b7-f23584ac98b8" -k
  fi
 fi
 
 if [ "$BedroomTV" = On ]
 then
- if [ ! -f /jffs/scripts/CheckTV/BedroomTVOn ]
+ if [ ! -f /tmp/CheckTV/BedroomTVOn ]
  then
-  touch /jffs/scripts/CheckTV/BedroomTVOn
+  touch /tmp/CheckTV/BedroomTVOn
   curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/5b230bee-7f50-4ef5-a564-ac1fbefe0791/TV/on?access_token=d1c1b409-269e-4614-8447-b0cd8216c111" -k
  fi
 else
- if [ -f /jffs/scripts/CheckTV/BedroomTVOn ]
+ if [ -f /tmp/CheckTV/BedroomTVOn ]
  then
-  rm -f /jffs/scripts/CheckTV/BedroomTVOn
+  rm -f /tmp/CheckTV/BedroomTVOn
   curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/5b230bee-7f50-4ef5-a564-ac1fbefe0791/TV/off?access_token=d1c1b409-269e-4614-8447-b0cd8216c111" -k
  fi
 fi
 
 if [ "$XBoxOne" = On ]
 then
- if [ ! -f /jffs/scripts/CheckTV/XBoxOneOn ]
+ if [ ! -f /tmp/CheckTV/XBoxOneOn ]
  then
-  touch /jffs/scripts/CheckTV/XBoxOneOn
+  touch /tmp/CheckTV/XBoxOneOn
   curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/183a2032-51c2-4e97-8dd6-b6ded0027355/TV/on?access_token=3dc940ec-cd27-4d05-9360-eb7ececf4155" -k
  fi
 else
- if [ -f /jffs/scripts/CheckTV/XBoxOneOn ]
+ if [ -f /tmp/CheckTV/XBoxOneOn ]
  then
-  rm -f /jffs/scripts/CheckTV/XBoxOneOn
+  rm -f /tmp/CheckTV/XBoxOneOn
   curl "https://graph-eu01-euwest1.api.smartthings.com/api/smartapps/installations/183a2032-51c2-4e97-8dd6-b6ded0027355/TV/off?access_token=3dc940ec-cd27-4d05-9360-eb7ececf4155" -k
  fi
 fi
